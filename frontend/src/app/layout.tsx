@@ -3,10 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-
 import Sidebar, { menuItems } from './components/layout/Sidebar';
-// Topbar는 현재 사용하지 않으므로 import하지 않아도 됩니다.
-// import Topbar from './components/layout/Topbar'; 
 import "./globals.css";
 
 export default function RootLayout({
@@ -18,33 +15,43 @@ export default function RootLayout({
     const pathname = usePathname();
 
     useEffect(() => {
+        let found = false;
         if (pathname === '/') {
             setActiveTitle('대시보드');
-            return;
-        }
-        for (const parent of menuItems) {
-            if (parent.children) {
-                const child = parent.children.find(c => c.path === pathname);
-                if (child) {
-                    setActiveTitle(child.title);
-                    return;
+            found = true;
+        } else {
+            for (const parent of menuItems) {
+                if (parent.children) {
+                    const child = parent.children.find(c => c.path === pathname);
+                    if (child) {
+                        setActiveTitle(child.title);
+                        found = true;
+                        break;
+                    }
+                } else if (parent.path === pathname) {
+                    setActiveTitle(parent.title);
+                    found = true;
+                    break;
                 }
             }
         }
+        if (!found) {
+            //setActiveTitle('페이지 없음');
+        }
     }, [pathname]);
 
-    const handleMenuClick = (title: string, parentTitle?: string) => {
+    const handleMenuClick = (title: string) => {
         setActiveTitle(title);
     };
 
     return (
         <html lang="ko">
             <body>
-                <div className="flex h-screen bg-white">
+                <div className="flex h-screen bg-white text-black">
                     <Sidebar onMenuClick={handleMenuClick} />
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                        <main className="flex-1 p-8 overflow-y-auto">
-                           <h1 className="text-3xl font-bold mb-6">{activeTitle}</h1>
+                    <div className="flex-1 flex flex-col">
+                        <main className="flex-1 p-4">
+                           <h1 className="text-3xl font-bold mb-4">{activeTitle}</h1>
                             {children}
                         </main>
                     </div>
