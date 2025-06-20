@@ -249,6 +249,7 @@ export class GameRepository {
               };
         }
 
+<<<<<<< HEAD
          //내 TEst
             async getAllTreenfo(uIndex: number): Promise<any> {
                 const query = 'CALL GetAllTreeInfo(?)';
@@ -285,5 +286,8 @@ export class GameRepository {
                          })),
                      };
             }
+=======
+       
+>>>>>>> 075b6941c6f423f63c0b5426c3e791a0d5b721c8
       
 }

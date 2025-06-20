@@ -323,6 +323,7 @@ export class GameController{
     }
 
 
+<<<<<<< HEAD
      //TEST
     @Get('getALLTreeInfo/:itemIndex')
       
@@ -383,5 +384,8 @@ export class GameController{
     return { data: mockServerData };
            
     }
+=======
+   
+>>>>>>> 075b6941c6f423f63c0b5426c3e791a0d5b721c8
 
 }
