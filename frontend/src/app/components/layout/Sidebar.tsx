@@ -1,10 +1,10 @@
-// frontend/src/app/components/layout/Sidebar.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styled from 'styled-components';
+import { useAuthStore } from '@/store/authStore'; // [추가] 인증 스토어를 가져옵니다.
 
 // --- 아이콘 컴포넌트 ---
 const ChevronRightIcon = () => (
@@ -14,23 +14,22 @@ const ChevronDownIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
 );
 
-// --- [수정 1] 메뉴 데이터 및 타입 ---
+// --- 메뉴 데이터 및 타입 ---
 interface MenuItem {
   title: string;
-  path?: string; // 단일 링크용 경로 (선택적)
+  path?: string;
   pathPrefix?: string;
-  children?: { title: string; path: string }[]; // 하위 메뉴 (선택적)
+  children?: { title: string; path: string }[];
 }
 
-// "대시보드"를 단일 링크로 수정하고, "빠르게 시작하기"는 이전 데이터로 복원
 export const menuItems: MenuItem[] = [
-    { title: '대시보드', path: '/dashboard' },
+    { title: 'Admin', path: '/admin' },
     { 
-        title: '빠르게 시작하기', 
-        pathPrefix: '/getting-started', 
+        title: '대시보드', 
+        pathPrefix: '/dashboard', 
         children: [ 
-            { title: '자습서: 틱택토 게임', path: '/getting-started/tutorial' }, 
-            { title: 'React로 사고하기', path: '/getting-started/thinking-in-react' } 
+            { title: 'Server Status', path: '/dashboard/server-status' }, 
+            { title: '유저통계', path: '/dashboard/user-statistics' } 
         ] 
     },
     { 
@@ -50,7 +49,6 @@ export const menuItems: MenuItem[] = [
     },
 ];
 
-
 // --- Styled Components ---
 const Aside = styled.aside`
   width: 16rem;
@@ -59,6 +57,8 @@ const Aside = styled.aside`
   border-right: 1px solid #e5e7eb;
   padding: 1rem;
   flex-shrink: 0;
+  /* [추가] 로그아웃 버튼을 하단에 고정하기 위해 */
+  position: relative; 
 `;
 
 const Logo = styled.div`
@@ -86,7 +86,6 @@ const MenuButton = styled.button<{ $isActive: boolean }>`
   }
 `;
 
-// 단일 메뉴 링크를 위한 스타일 추가
 const DirectLink = styled(Link)<{ $isActive: boolean }>`
   display: flex;
   align-items: center;
@@ -129,16 +128,38 @@ const SubMenuLink = styled(Link)<{ $isActive: boolean }>`
   }
 `;
 
+// [추가] 로그아웃 버튼 스타일
+const LogoutButton = styled.button`
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    width: calc(100% - 2rem);
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    color: #374151;
+    transition: background-color 0.15s, color 0.15s;
+
+    &:hover {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        border-color: #fca5a5;
+    }
+`;
+
 export default function Sidebar() {
   const pathname = usePathname();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  // [추가] authStore에서 logout 함수를 가져옵니다.
+  const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {
     const currentMenu = menuItems.find(item => item.pathPrefix && pathname.startsWith(item.pathPrefix));
     if (currentMenu) {
         setOpenMenu(currentMenu.title);
     } else {
-        // 하위 메뉴가 없는 페이지에 있을 때 모든 메뉴를 닫습니다.
         setOpenMenu(null);
     }
   }, [pathname]);
@@ -153,7 +174,6 @@ export default function Sidebar() {
       <nav>
         {menuItems.map((item) => (
           <div key={item.title} style={{ marginBottom: '0.25rem' }}>
-            {/* --- [수정 3] children 배열이 있고, 그 길이가 0보다 클 때만 아코디언 메뉴로 렌더링 --- */}
             {item.children && item.children.length > 0 ? (
               <>
                 <MenuButton $isActive={openMenu === item.title} onClick={() => toggleMenu(item.title)}>
@@ -173,7 +193,6 @@ export default function Sidebar() {
                 )}
               </>
             ) : (
-              // children이 없거나 비어있으면 단일 링크로 렌더링
               <DirectLink href={item.path || '#'} $isActive={pathname === item.path}>
                 <span>{item.title}</span>
               </DirectLink>
@@ -181,6 +200,10 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
+      {/* [추가] 로그아웃 버튼을 렌더링하고 onClick 이벤트에 연결합니다. */}
+      <LogoutButton onClick={logout}>
+        로그아웃
+      </LogoutButton>
     </Aside>
   );
 }

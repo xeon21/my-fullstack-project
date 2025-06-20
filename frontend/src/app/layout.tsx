@@ -1,8 +1,7 @@
 // frontend/src/app/layout.tsx
 import type { Metadata } from 'next';
 import StyledComponentsRegistry from '@/lib/registry';
-import Sidebar from './components/layout/Sidebar';
-import Header from './components/layout/Header'; // Header 컴포넌트 import
+import AuthWrapper from './components/AuthWrapper'; // AuthWrapper import
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -19,15 +18,9 @@ export default function RootLayout({
     <html lang="ko">
       <body>
         <StyledComponentsRegistry>
-          <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f9fafb', fontFamily: 'sans-serif' }}>
-            <Sidebar />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-               <Header />
-              <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
-                {children}
-              </main>
-            </div>
-          </div>
+          {/* 이제 AuthWrapper가 로그인 상태에 따라 
+              레이아웃을 보여주거나, 로그인 페이지만 보여주는 모든 것을 결정합니다. */}
+          <AuthWrapper>{children}</AuthWrapper>
         </StyledComponentsRegistry>
       </body>
     </html>

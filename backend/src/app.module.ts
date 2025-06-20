@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { GameModule } from './game/game.modules';
 import { LoginModule } from './login/login.modules';
 import { UserInfoModule } from './userinfo/userinfo.modules';
+import { AuthModule } from './auth/auth.modules';
 
 @Module({
 
@@ -21,7 +22,8 @@ import { UserInfoModule } from './userinfo/userinfo.modules';
     }),
     GameModule,
     LoginModule,
-    UserInfoModule
+    UserInfoModule,
+    AuthModule,
   ],
    
 })

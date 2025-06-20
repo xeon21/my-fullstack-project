@@ -31,7 +31,7 @@ async function bootstrap() {
   //Swagger 설정 끝
 
   app.getHttpAdapter().getInstance().keepAliveTimeout = 15000; 
-  await app.listen(process.env.PORT ?? 3001, '0.0.0.0');
+  await app.listen(process.env.PORT ?? 3002, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
   console.log(`Swagger UI available at ${await app.getUrl()}/api-docs`); // Swagger UI 주소 로그
 }
