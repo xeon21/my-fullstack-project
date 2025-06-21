@@ -9,11 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule,{
     logger: WinstonModule.createLogger(winstonLoggerOptions),
   });
-<<<<<<< HEAD
    app.enableCors();
-=======
-   
->>>>>>> 075b6941c6f423f63c0b5426c3e791a0d5b721c8
   
   //Swagger 설정 시작
   const config = new DocumentBuilder()

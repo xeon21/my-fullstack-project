@@ -249,45 +249,50 @@ export class GameRepository {
               };
         }
 
-<<<<<<< HEAD
-         //내 TEst
-            async getAllTreenfo(uIndex: number): Promise<any> {
-                const query = 'CALL GetAllTreeInfo(?)';
-                const param = [uIndex];
-             
-                console.log(param);
-                const rows = await this.db.executeQuery<any[]>(query,param);
-                console.log('getAllTreenfo Raw Result:',rows);
-                const firstRow = rows[0];
-                     
-                if (!rows || rows.length === 0) {
-                    console.log('Raw Result Not Exist');
-                    const userdata = [];    
-                    return{
-                               data : userdata
-                         }
+        //Tree 정보 가져오기
+     async getAllTreenfo(itemIndex: number): Promise<ClientDto.ItemInfo> {
+            const query = 'CALL GetAllTreeInfo(?)';
+            const param = [itemIndex];
+            const rows = await this.db.executeQuery<any[]>(query,param);
+            
+            
+            if (!rows || rows.length === 0) {
+                console.log('Raw Result Not Exist');
+      
+                return{
+                      
+                     itemLv: 0,
+                     name_KR: 'none',
+                     name_EN: 'none',
+                     name_EC: 'none',
+                     co2_1:0,
+                     co2_2: 0,
+                     co2_3: 0,
+                     co2_4: 0,
+                     life_1: 0,
+                     life_2: 0,
+                     life_3: 0,
+                     life_4: 0,
                 }
-                   
-                return {
-                       
-                        data: firstRow.map(row => ({
-                                itemLv: row.LEVEL,
-                                name_KR: row.NAME_KR,
-                                name_EN: row.NAME_EN,
-                                name_EC: row.SCIENTIFIC,
-                                co2_1: row.CO2ABS1,
-                                co2_2: row.CO2ABS2,
-                                co2_3: row.CO2ABS3,
-                                co2_4: row.CO2ABS4,
-                                life_1: row.LIFE1,
-                                life_2: row.LIFE2,
-                                life_3: row.LIFE3,
-                                life_4: row.LIFE4,
-                         })),
-                     };
             }
-=======
-       
->>>>>>> 075b6941c6f423f63c0b5426c3e791a0d5b721c8
+     
+            const firstRow = rows[0];
+            const userdata = firstRow[0];
+            console.log('getTreenfo Raw Result:',firstRow);
+            return {
+                     itemLv: userdata.LEVEL,
+                     name_KR: userdata.NAME_KR,
+                     name_EN: userdata.NAME_EN,
+                     name_EC: userdata.SCIENTIFIC,
+                     co2_1: userdata.CO2ABS1,
+                     co2_2: userdata.CO2ABS2,
+                     co2_3: userdata.CO2ABS3,
+                     co2_4: userdata.CO2ABS4,
+                     life_1: userdata.LIFE1,
+                     life_2: userdata.LIFE2,
+                     life_3: userdata.LIFE3,
+                     life_4: userdata.LIFE4,
+              };
+        }
       
 }
