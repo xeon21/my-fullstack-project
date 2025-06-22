@@ -250,12 +250,12 @@ export class GameRepository {
         }
 
         //Tree 정보 가져오기
-     async getAllTreenfo(itemIndex: number): Promise<ClientDto.ItemInfo> {
+     async getAllTreenfo(itemIndex: number): Promise<any> {
             const query = 'CALL GetAllTreeInfo(?)';
             const param = [itemIndex];
             const rows = await this.db.executeQuery<any[]>(query,param);
             
-            
+             console.log('getAllTreenfo Raw Result:',rows);
             if (!rows || rows.length === 0) {
                 console.log('Raw Result Not Exist');
       
@@ -278,21 +278,27 @@ export class GameRepository {
      
             const firstRow = rows[0];
             const userdata = firstRow[0];
-            console.log('getTreenfo Raw Result:',firstRow);
+            console.log('getTreenfo Raw Result:',userdata);
             return {
-                     itemLv: userdata.LEVEL,
-                     name_KR: userdata.NAME_KR,
-                     name_EN: userdata.NAME_EN,
-                     name_EC: userdata.SCIENTIFIC,
-                     co2_1: userdata.CO2ABS1,
-                     co2_2: userdata.CO2ABS2,
-                     co2_3: userdata.CO2ABS3,
-                     co2_4: userdata.CO2ABS4,
-                     life_1: userdata.LIFE1,
-                     life_2: userdata.LIFE2,
-                     life_3: userdata.LIFE3,
-                     life_4: userdata.LIFE4,
+                     data: firstRow.map(row => ({
+                        itemLv: row.LEVEL,
+                        name_KR: row.NAME_KR,
+                        name_EN: row.NAME_EN,
+                        name_EC: row.SCIENTIFIC,
+                        co2_1: row.CO2ABS1,
+                        co2_2: row.CO2ABS2,
+                        co2_3: row.CO2ABS3,
+                        co2_4: row.CO2ABS4,
+                        life_1: row.LIFE1,
+                        life_2: row.LIFE2,
+                        life_3: row.LIFE3,
+                        life_4: row.LIFE4,
+                      })),
               };
+
+
+
+
         }
       
 }

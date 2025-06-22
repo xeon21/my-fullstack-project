@@ -114,7 +114,7 @@ const LoadingOrErrorContainer = styled.div`
 export default function DashboardPage() {
   // --- [수정] 상태 변수 추가 ---
   const [levelInput, setLevelInput] = useState<string>('0'); // 사용자의 입력을 받는 상태
-  const [apiParam, setApiParam] = useState<string>('1');     // 실제 API 요청에 사용할 상태
+  const [apiParam, setApiParam] = useState<string>('2');     // 실제 API 요청에 사용할 상태
 
   const [data, setData] = useState<TreeInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -129,7 +129,7 @@ export default function DashboardPage() {
       
       try {
         const response = await fetch(`http://localhost:3002/game/getALLTreeInfo/${apiParam}`, {
-          method: 'Get',
+          method: 'GET',
         });
 
         if (!response.ok) {
