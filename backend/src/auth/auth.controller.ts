@@ -9,7 +9,7 @@ export class AuthController {
   
   @Post('login')
   async login(@Body() loginDto: any) {
-     this.logger.log('plantTree: '+ JSON.stringify(loginDto));
+     this.logger.log('login: '+ JSON.stringify(loginDto));
     // 실제로는 DTO(Data Transfer Object)를 만들어 사용하는 것이 좋습니다.
     return this.authService.login(loginDto);
   }

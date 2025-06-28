@@ -1,10 +1,11 @@
+// frontend/src/app/components/layout/Sidebar.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styled from 'styled-components';
-import { useAuthStore } from '@/store/authStore'; // [추가] 인증 스토어를 가져옵니다.
+import { useAuthStore } from '@/store/authStore';
 
 // --- 아이콘 컴포넌트 ---
 const ChevronRightIcon = () => (
@@ -14,170 +15,196 @@ const ChevronDownIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
 );
 
+
 // --- 메뉴 데이터 및 타입 ---
 interface MenuItem {
   title: string;
+  icon: React.ReactNode;
   path?: string;
   pathPrefix?: string;
-  children?: { title: string; path: string }[];
+  children?: { title: string; path: string; permission?: string }[];
+  permission?: string;
 }
 
 export const menuItems: MenuItem[] = [
-    { title: 'Admin', path: '/admin' },
-    { 
-        title: '대시보드', 
-        pathPrefix: '/dashboard', 
-        children: [ 
-            { title: 'Server Status', path: '/dashboard/server-status' }, 
-            { title: '유저통계', path: '/dashboard/user-statistics' } 
-        ] 
+    { title: 'Admin', icon: '👑', path: '/admin'}, //permission: 'menu_admin_view' },
+    {
+        title: 'Dashboard',
+        icon: '📊',
+        pathPrefix: '/dashboard',
+        //permission: 'menu_dashboard_view',
+        children: [
+            { title: 'Server Status', path: '/dashboard/server-status' },
+            { title: '유저통계', path: '/dashboard/user-statistics' }
+        ]
     },
-    { 
-      title: '설치하기', 
-      pathPrefix: '/installation', 
-      children: [ 
-        { title: '새로운 React 앱 만들기', path: '/installation/new-app' }, 
-        { title: '처음부터 React 앱 만들기', path: '/installation/from-scratch' }, 
-        { title: '기존 프로젝트에 React 추가하기', path: '/installation/add-react' } 
-      ] 
-    },
-    { title: '설정하기', pathPrefix: '/configuration', 
-      children: [ 
-        { title: '에디터 설정하기', path: '/configuration/editor-setup' }, 
-        { title: 'TypeScript 사용하기', path: '/configuration/typescript' } 
-      ] 
-    },
+    { title: 'Gateway Statue', icon: '📡', path: '/gateway-status'},
+    { title: 'Tag Status', icon: '🏷️', path: '/tag-status'},
+    { title: 'Sensor Status', icon: '🌡️', path: '/sensor-status'},
+    { title: 'Product Search', icon: '🔍', path: '/product-search'},
+    { title: 'Infotab+', icon: 'ℹ️', path: '/infotab'},
 ];
+
 
 // --- Styled Components ---
 const Aside = styled.aside`
   width: 16rem;
   height: 100vh;
-  background-color: white;
-  border-right: 1px solid #e5e7eb;
+  background-color: #2c3e50;
   padding: 1rem;
   flex-shrink: 0;
-  /* [추가] 로그아웃 버튼을 하단에 고정하기 위해 */
-  position: relative; 
+  position: relative;
+  display: flex;
+  flex-direction: column;
 `;
 
 const Logo = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
   font-weight: bold;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   padding: 0.5rem 0.75rem;
+  color: #ecf0f1;
+  text-align: center;
+`;
+
+const Nav = styled.nav`
+  flex-grow: 1;
+`;
+
+const MenuItemWrapper = styled.div`
+  border-bottom: 1px solid #34495e;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const menuItemStyle = (isActive: boolean) => `
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s, color 0.2s;
+  color: ${isActive ? 'white' : '#bdc3c7'};
+  background-color: ${isActive ? '#3498db' : 'transparent'};
+  font-size: 1rem;
+  margin-bottom: 0;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${isActive ? '#2980b9' : '#34495e'};
+    color: white;
+  }
 `;
 
 const MenuButton = styled.button<{ $isActive: boolean }>`
-  display: flex;
-  align-items: center;
+  ${props => menuItemStyle(props.$isActive)}
   justify-content: space-between;
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s, color 0.15s;
-  color: ${props => (props.$isActive ? '#2563eb' : '#374151')};
-  font-size: 1rem;
-
-  &:hover {
-    background-color: #f3f4f6;
-  }
 `;
 
 const DirectLink = styled(Link)<{ $isActive: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  font-weight: 500;
-  font-size: 1rem;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s, color 0.15s;
-  color: #374151;
-  background-color: ${props => (props.$isActive ? '#f3f4f6' : 'transparent')};
+  ${props => menuItemStyle(props.$isActive)}
+`;
 
-  &:hover {
-    background-color: #f3f4f6;
-  }
+const IconSpan = styled.span`
+    margin-right: 1rem;
+    font-size: 1.25rem;
+    line-height: 1;
+`;
+
+const MenuText = styled.span`
+    flex-grow: 1;
 `;
 
 const SubMenuList = styled.ul`
-  margin-left: 1rem;
-  margin-top: 0.25rem;
-  padding: 0.25rem 0;
+  margin: 0.5rem 0 0.5rem 2rem;
+  padding-left: 1rem;
   list-style-type: none;
+  border-left: 1px solid #4a627a;
 `;
 
 const SubMenuLink = styled(Link)<{ $isActive: boolean }>`
   display: block;
-  padding: 0.25rem 0.75rem;
-  color: #4b5563;
+  padding: 0.5rem 0.75rem;
   border-radius: 0.375rem;
-  transition: background-color 0.15s, color 0.15s;
-  font-size: 0.875rem;
-  background-color: transparent;
+  color: ${props => (props.$isActive ? 'white' : '#95a5a6')};
   font-weight: ${props => (props.$isActive ? '600' : 'normal')};
-  color: ${props => (props.$isActive ? '#1f2937' : '#4b5563')};
+  font-size: 0.9rem;
+  background-color: ${props => (props.$isActive ? '#34495e' : 'transparent')};
 
   &:hover {
-    background-color: #f3f4f6;
-    color: #111827;
+    background-color: #34495e;
+    color: white;
   }
 `;
 
-// [추가] 로그아웃 버튼 스타일
 const LogoutButton = styled.button`
-    position: absolute;
-    bottom: 1rem;
-    left: 1rem;
-    right: 1rem;
-    width: calc(100% - 2rem);
-    padding: 0.5rem 1rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
+    margin-top: auto;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #4a627a;
+    border-radius: 0.5rem;
     font-weight: 600;
-    color: #374151;
-    transition: background-color 0.15s, color 0.15s;
+    color: #bdc3c7;
+    background-color: transparent;
+    cursor: pointer;
 
     &:hover {
-        background-color: #fee2e2;
-        color: #b91c1c;
-        border-color: #fca5a5;
+        background-color: #e74c3c;
+        color: white;
+        border-color: #e74c3c;
     }
 `;
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  // [추가] authStore에서 logout 함수를 가져옵니다.
   const logout = useAuthStore((state) => state.logout);
+  const hasPermission = useAuthStore((state) => state.hasPermission);
+  
+  // [핵심 수정 1] user 객체를 가져옵니다. useMemo의 의존성으로 사용하기 위함입니다.
+  const user = useAuthStore((state) => state.user);
 
+  // [핵심 수정 2] useMemo를 사용하여 accessibleMenuItems 배열을 메모이제이션합니다.
+  const accessibleMenuItems = useMemo(() => {
+    return menuItems.filter(item =>
+      item.permission ? hasPermission(item.permission) : true
+    );
+  }, [user, hasPermission]); // user의 정보(권한)가 바뀔 때만 이 배열을 다시 계산합니다.
+
+  // [핵심 수정 3] useEffect 로직을 복원하고, 의존성 배열에 안정적인 accessibleMenuItems를 추가합니다.
   useEffect(() => {
-    const currentMenu = menuItems.find(item => item.pathPrefix && pathname.startsWith(item.pathPrefix));
+    const currentMenu = accessibleMenuItems.find(item => item.pathPrefix && pathname.startsWith(item.pathPrefix));
     if (currentMenu) {
         setOpenMenu(currentMenu.title);
     } else {
+        // 현재 경로가 하위 메뉴에 속하지 않으면, 열려있는 메뉴를 닫습니다.
         setOpenMenu(null);
     }
-  }, [pathname]);
+  }, [pathname, accessibleMenuItems]); // 이제 이 훅은 경로가 바뀌거나, 권한이 바뀔 때만 실행됩니다.
 
   const toggleMenu = (title: string) => {
     setOpenMenu(prevOpenMenu => (prevOpenMenu === title ? null : title));
   };
-
+  
   return (
     <Aside>
-      <Logo>My CMS</Logo>
-      <nav>
-        {menuItems.map((item) => (
-          <div key={item.title} style={{ marginBottom: '0.25rem' }}>
-            {item.children && item.children.length > 0 ? (
+      <Logo>Cilinus AIDR</Logo>
+      <Nav>
+        {accessibleMenuItems.map((item) => (
+          <MenuItemWrapper key={item.title}>
+            {item.children ? (
               <>
-                <MenuButton $isActive={openMenu === item.title} onClick={() => toggleMenu(item.title)}>
-                  <span>{item.title}</span>
+                <MenuButton
+                  $isActive={!!(item.pathPrefix && pathname.startsWith(item.pathPrefix))}
+                  onClick={() => toggleMenu(item.title)}
+                >
+                  <IconSpan>{item.icon}</IconSpan>
+                  <MenuText>{item.title}</MenuText>
                   {openMenu === item.title ? <ChevronDownIcon /> : <ChevronRightIcon />}
                 </MenuButton>
                 {openMenu === item.title && (
@@ -193,14 +220,17 @@ export default function Sidebar() {
                 )}
               </>
             ) : (
-              <DirectLink href={item.path || '#'} $isActive={pathname === item.path}>
-                <span>{item.title}</span>
+              <DirectLink
+                href={item.path || '#'}
+                $isActive={pathname === item.path}
+              >
+                <IconSpan>{item.icon}</IconSpan>
+                <MenuText>{item.title}</MenuText>
               </DirectLink>
             )}
-          </div>
+          </MenuItemWrapper>
         ))}
-      </nav>
-      {/* [추가] 로그아웃 버튼을 렌더링하고 onClick 이벤트에 연결합니다. */}
+      </Nav>
       <LogoutButton onClick={logout}>
         로그아웃
       </LogoutButton>

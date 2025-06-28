@@ -6,63 +6,111 @@ import styled from 'styled-components';
 import { menuItems } from './Sidebar';
 
 const HeaderWrapper = styled.header`
-  height: 4rem;
+  height: 4.5rem;
   width: 100%;
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: transparent;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 2rem;
   flex-shrink: 0;
+
+  /* [추가] 구분선 스타일 */
+  border-bottom: 1px solid #34495e; /* 사이드바의 어두운 색상과 비슷한 톤으로 선 추가 */
+  padding-bottom: 1rem; /* 선과 아래 콘텐츠 사이의 여백 */
+  margin-bottom: 1rem;  /* 헤더 자체의 하단 마진 추가 */
 `;
 
-const HeaderTitle = styled.h1`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
+const Breadcrumb = styled.div`
+    color: #95a5a6;
+    font-size: 0.875rem;
+
+    span {
+        color: white;
+        font-weight: 600;
+        font-size: 1.25rem;
+        display: block;
+        margin-top: 0.25rem;
+    }
 `;
+
+const ControlsWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+`;
+
+const SearchInput = styled.input`
+    background-color: transparent;
+    border: 1px solid #4a627a;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    width: 200px;
+    transition: border-color 0.2s;
+
+    &::placeholder {
+        color: #95a5a6;
+    }
+
+    &:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+`;
+
+const IconContainer = styled.div`
+    display: flex;
+    gap: 1rem;
+    color: #bdc3c7;
+    font-size: 1.25rem;
+
+    span {
+        cursor: pointer;
+        &:hover {
+            color: white;
+        }
+    }
+`;
+
 
 export default function Header() {
   const pathname = usePathname();
   const [title, setTitle] = useState('대시보드');
+  const [parentTitle, setParentTitle] = useState('Home');
 
   useEffect(() => {
-    // 기본 페이지 처리
-    if (pathname === '/' || pathname === '/dashboard') {
-      setTitle('대시보드');
-      return;
-    }
+    let pageTitle = 'Dashboard';
+    let parent = 'Home';
 
-    let pageTitle = '대시보드'; // 기본값
-    let found = false;
-
-    // 메뉴 아이템에서 현재 경로와 일치하는 항목 찾기
     for (const item of menuItems) {
-      // 1. 하위 메뉴에서 찾기
-      // [수정] item.children이 존재하는지 먼저 확인
-      if (item.children && item.children.length > 0) {
-        const child = item.children.find(c => c.path === pathname);
-        if (child) {
-          pageTitle = `${item.title} > ${child.title}`;
-          found = true;
-          break;
-        }
-      } 
-      // 2. 단일 메뉴에서 찾기 (children이 없는 경우)
-      else if (item.path === pathname) {
+      if (item.children?.some(c => c.path === pathname)) {
+        parent = item.title;
+        pageTitle = item.children.find(c => c.path === pathname)?.title || '';
+        break;
+      } else if (item.path === pathname) {
         pageTitle = item.title;
-        found = true;
         break;
       }
     }
-
     setTitle(pageTitle);
+    setParentTitle(parent);
 
   }, [pathname]);
 
   return (
     <HeaderWrapper>
-      <HeaderTitle>{title}</HeaderTitle>
+      <Breadcrumb>
+        {parentTitle} / {title}
+        <span>{title}</span>
+      </Breadcrumb>
+      <ControlsWrapper>
+          <SearchInput placeholder="Search here" />
+          <IconContainer>
+            <span>⚙️</span>
+            <span>🔔</span>
+          </IconContainer>
+      </ControlsWrapper>
     </HeaderWrapper>
   );
 }

@@ -12,7 +12,7 @@ export class AuthService {
     
     if (username === 'test' && pass === '1234') {
       // 비밀번호는 제외하고 유저 정보를 반환합니다.
-      return { userId: 1, username: 'test' };
+      return { userId: 1, username: 'test', permissions: ['menu_admin_view', 'menu_dashboard_view'] };
     }
     return null;
   }
