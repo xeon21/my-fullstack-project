@@ -11,7 +11,8 @@ export class MysqlProvider {
     
     // 커넥션 풀 생성
   async getPool(): Promise<Pool> {
-    //this.logger.log('DB_HOST: ' + this.configService.get<string>('DB_HOST'));
+    this.logger.log('DB_HOST: ' + this.configService.get<string>('DB_USER'));
+    this.logger.log('DB_HOST: ' + this.configService.get<string>('DB_HOST'));
     
     if (!this.pool) {
       try {
