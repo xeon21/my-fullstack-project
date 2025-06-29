@@ -79,7 +79,6 @@ const EditorLayout = styled.div`
   margin: 0 auto;
 `;
 
-// [추가] 누락되었던 MainColumn 스타일 정의
 const MainColumn = styled.div`
     flex: 1;
 `;
@@ -202,9 +201,11 @@ export default function EdgeEditorPage() {
       transitionTime: scene.transitionTime * 1000
     }));
 
+    const escapedSceneData = JSON.stringify(sceneData).replace(/<\/script>/g, '<\\/script>');
+
     const script = `
       <script>
-        const scenes = ${JSON.stringify(sceneData)};
+        const scenes = ${escapedSceneData};
         let currentSceneIndex = 0;
 
         function showScene(index) {
@@ -241,15 +242,24 @@ export default function EdgeEditorPage() {
   <style>
     body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #2c3e50; display: flex; justify-content: center; align-items: center;}
     .display-wrapper { 
-        width: 98vw;
+        width: 100%; /* [수정] 너비를 100%로 설정 */
         max-width: 1600px;
-        border: 2px solid #fff;
+        /* [삭제] border 제거 */
         box-shadow: 0 0 20px rgba(0,0,0,0.5);
         aspect-ratio: 8 / 1;
     }
     .scene-container { display: flex; width: 100%; height: 100%; }
     .region { height: 100%; box-sizing: border-box; overflow: hidden; background-color: #eee; }
-    .region img, .region video, .region iframe { width: 100%; height: 100%; object-fit: cover; border: none; }
+    .region img, .region video, .region iframe { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        border: none; 
+        /* [추가] iframe 내부 문서가 여백 없이 꽉 차도록 함 */
+        display: block;
+        margin: 0;
+        padding: 0;
+    }
   </style>
 </head>
 <body>
