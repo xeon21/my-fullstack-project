@@ -3,69 +3,56 @@
 
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { useEditorStore, Content } from '@/store/editorStore';
+import { ContentTypeModal } from './ContentTypeModal';
+import { SceneEditor } from './SceneEditor';
 
-import { RegionControls } from './RegionControls';
-import { Region } from './Region';
-import { PropertyInspector } from './PropertyInspector';
-import { ContentTypeModal } from './ContentTypeModal'; // [추가] 모달 컴포넌트 임포트
-
-
-const EditorLayout = styled.div`
-  display: flex;
-  height: calc(100vh - 5rem);
-  background-color: #ffffff;
-  color: #333;
-`;
-
-const Sidebar = styled.div`
-  width: 250px;
+const PageWrapper = styled.div`
   padding: 1rem;
-  border-right: 1px solid #e0e0e0;
-  background-color: #f8f9fa;
-  display: flex;
-  flex-direction: column;
+  background-color: #f0f2f5;
+  min-height: 100vh;
 `;
 
-const MainContent = styled.main`
-  flex-grow: 1;
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow: auto;
-`;
-
-const Header = styled.div`
-  width: 100%;
+const Header = styled.header`
+  max-width: 1280px;
+  margin: 0 auto 1.5rem auto;
+  padding: 0.8rem 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+`;
+
+const HeaderTitle = styled.h1`
+  margin: 0;
+  font-size: 1.2rem;
 `;
 
 const ControlsWrapper = styled.div`
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   align-items: center;
 `;
 
 const FilenameInput = styled.input`
-  padding: 0.6rem;
+  padding: 0.4rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  width: 150px;
+  width: 120px;
+  font-size: 0.8rem;
 `;
 
 const ResetButton = styled.button`
-  padding: 0.6rem 1.2rem;
+  padding: 0.4rem 0.8rem;
   background-color: #95a5a6;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 0.8rem;
 
   &:hover {
     background-color: #7f8c8d;
@@ -73,39 +60,48 @@ const ResetButton = styled.button`
 `;
 
 const ExportButton = styled.button`
-  padding: 0.6rem 1.2rem;
+  padding: 0.4rem 0.8rem;
   background-color: #e67e22;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 0.8rem;
 
   &:hover {
     background-color: #d35400;
   }
 `;
 
-const CanvasWrapper = styled.div`
-  width: 100%;
-  max-width: 1200px;
-  margin: 2rem auto;
-  border: 2px solid #ccc;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  aspect-ratio: 8 / 1;
-  display: flex;
+const EditorLayout = styled.div`
+  max-width: 1280px;
+  margin: 0 auto;
 `;
 
-const ResizeHandle = styled(PanelResizeHandle)`
-  width: 12px;
-  background-clip: padding-box;
-  background-color: #e0e0e0;
-  border: 4px solid transparent;
-  transition: background-color 0.2s;
-  
-  &:hover {
-    background-color: #3498db;
-  }
+// [추가] 누락되었던 MainColumn 스타일 정의
+const MainColumn = styled.div`
+    flex: 1;
+`;
+
+const AddSceneButton = styled.button`
+    display: block;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.7rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #3498db;
+    background-color: #eaf5ff;
+    border: 2px dashed #3498db;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background-color: #d4e9f9;
+        border-color: #2980b9;
+    }
 `;
 
 const HiddenFileInput = styled.input`
@@ -113,55 +109,50 @@ const HiddenFileInput = styled.input`
 `;
 
 export default function EdgeEditorPage() {
-  const { regions, updateRegionSize, updateRegionContent, reset } = useEditorStore();
-  const [exportFilename, setExportFilename] = useState('display');
-  
-  // [추가] 모달 상태 관리
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRegionForUpload, setSelectedRegionForUpload] = useState<string | null>(null);
+    const { 
+        scenes, 
+        addScene, 
+        updateRegionContent,
+        reset
+    } = useEditorStore();
 
+  const [exportFilename, setExportFilename] = useState('display');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [uploadInfo, setUploadInfo] = useState<{ sceneId: string, regionId: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // [수정] 빈 영역 클릭 시 모달을 엽니다.
-  const handleZoneClick = (regionId: string) => {
-    setSelectedRegionForUpload(regionId);
+  const handleZoneClick = (sceneId: string, regionId: string) => {
+    setUploadInfo({ sceneId, regionId });
     setIsModalOpen(true);
   };
 
-  // [추가] 모달에서 타입을 선택하고 '확인'을 눌렀을 때 실행되는 함수
   const handleContentTypeSelect = (contentType: Content['type']) => {
-    setIsModalOpen(false); // 모달 닫기
-    
-    if (!selectedRegionForUpload) return;
+    setIsModalOpen(false);
+    if (!uploadInfo) return;
     
     const fileInput = fileInputRef.current;
     if (fileInput) {
-        // 선택된 타입에 따라 파일 종류 필터링
         if (contentType === 'image') fileInput.accept = 'image/*';
         else if (contentType === 'video') fileInput.accept = 'video/*';
         else fileInput.accept = '.html';
         
-        // 파일 탐색기 열기
         fileInput.click();
     }
   };
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    const regionId = selectedRegionForUpload;
-
-    if (file && regionId) {
+    if (file && uploadInfo) {
+        const { sceneId, regionId } = uploadInfo;
         const contentType = file.type.startsWith('image') ? 'image' : 
                             file.type.startsWith('video') ? 'video' : 'webpage';
 
         const reader = new FileReader();
-
         reader.onload = (e) => {
-            const newContent: Content = {
+            updateRegionContent(sceneId, regionId, {
                 type: contentType,
                 src: e.target?.result as string,
-            };
-            updateRegionContent(regionId, newContent);
+            });
         };
         
         if (contentType === 'webpage') {
@@ -170,12 +161,77 @@ export default function EdgeEditorPage() {
             reader.readAsDataURL(file);
         }
     }
-    event.target.value = '';
-    setSelectedRegionForUpload(null); // 초기화
+    if (event.target) {
+      event.target.value = '';
+    }
+    setUploadInfo(null);
+  };
+
+  const handleAddScene = () => {
+    const name = prompt('새 씬의 이름을 입력하세요:', `씬 ${scenes.length + 1}`);
+    if (name) {
+      addScene(name);
+    }
   };
 
   const handleExport = () => {
-    // ... (내보내기 로직은 이전과 동일)
+    const sceneData = scenes.map(scene => ({
+        id: scene.id,
+        html: `
+        <div id="scene-${scene.id}" class="scene-container" style="display: none;">
+          ${scene.regions.map(region => {
+            let contentHtml = '';
+            if (region.content) {
+              switch (region.content.type) {
+                case 'image':
+                  contentHtml = `<img src="${region.content.src}" alt="">`;
+                  break;
+                case 'video':
+                  contentHtml = `<video src="${region.content.src}" autoplay muted loop playsinline></video>`;
+                  break;
+                case 'webpage':
+                  const escapedSrc = region.content.src.replace(/"/g, '&quot;');
+                  contentHtml = `<iframe srcdoc="${escapedSrc}"></iframe>`;
+                  break;
+              }
+            }
+            return `<div class="region" style="flex-basis: ${region.size}%;">${contentHtml}</div>`;
+          }).join('')}
+        </div>
+      `,
+      transitionTime: scene.transitionTime * 1000
+    }));
+
+    const script = `
+      <script>
+        const scenes = ${JSON.stringify(sceneData)};
+        let currentSceneIndex = 0;
+
+        function showScene(index) {
+          scenes.forEach((scene, i) => {
+            const el = document.getElementById('scene-' + scene.id);
+            if(el) el.style.display = i === index ? 'flex' : 'none';
+          });
+
+          if (scenes.length > 1) {
+            const nextDelay = scenes[index].transitionTime;
+            if (nextDelay > 0) {
+                setTimeout(nextScene, nextDelay);
+            }
+          }
+        }
+
+        function nextScene() {
+          currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
+          showScene(currentSceneIndex);
+        }
+
+        if (scenes.length > 0) {
+          showScene(0);
+        }
+      <\/script>
+    `;
+
     const htmlContent = `
 <!DOCTYPE html>
 <html lang="ko">
@@ -183,33 +239,24 @@ export default function EdgeEditorPage() {
   <meta charset="UTF-8">
   <title>${exportFilename}</title>
   <style>
-    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: black; }
-    .container { display: flex; width: 100%; height: 100%; }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #2c3e50; display: flex; justify-content: center; align-items: center;}
+    .display-wrapper { 
+        width: 98vw;
+        max-width: 1600px;
+        border: 2px solid #fff;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        aspect-ratio: 8 / 1;
+    }
+    .scene-container { display: flex; width: 100%; height: 100%; }
     .region { height: 100%; box-sizing: border-box; overflow: hidden; background-color: #eee; }
     .region img, .region video, .region iframe { width: 100%; height: 100%; object-fit: cover; border: none; }
   </style>
 </head>
 <body>
-  <div class="container">
-    ${regions.map(region => {
-      let contentHtml = '';
-      if (region.content) {
-        switch (region.content.type) {
-          case 'image':
-            contentHtml = `<img src="${region.content.src}" alt="">`;
-            break;
-          case 'video':
-            contentHtml = `<video src="${region.content.src}" autoplay muted loop playsinline></video>`;
-            break;
-          case 'webpage':
-            const escapedSrc = region.content.src.replace(/"/g, '&quot;');
-            contentHtml = `<iframe srcdoc="${escapedSrc}"></iframe>`;
-            break;
-        }
-      }
-      return `<div class="region" style="flex-basis: ${region.size}%;">${contentHtml}</div>`;
-    }).join('')}
+  <div class="display-wrapper">
+    ${sceneData.map(s => s.html).join('')}
   </div>
+  ${script}
 </body>
 </html>`;
 
@@ -221,31 +268,25 @@ export default function EdgeEditorPage() {
     link.click();
     document.body.removeChild(link);
   };
-
+  
   return (
       <>
-        {/* [추가] 모달 렌더링 */}
         {isModalOpen && (
           <ContentTypeModal 
             onClose={() => setIsModalOpen(false)} 
             onConfirm={handleContentTypeSelect}
           />
         )}
-        <EditorLayout>
-          <Sidebar>
-            {/* [수정] 사이드바에 콘텐츠 추가 관련 UI 제거 */}
-            <PropertyInspector />
-          </Sidebar>
-          <MainContent>
+        <PageWrapper>
             <Header>
-              <h1>엣지 디스플레이 에디터</h1>
+              <HeaderTitle>엣지 디스플레이 에디터</HeaderTitle>
               <ControlsWrapper>
                 <ResetButton onClick={() => {
-                  if (confirm('정말로 모든 작업을 초기화하시겠습니까?')) {
+                  if (confirm('전체 프로젝트를 초기화하시겠습니까? (모든 씬이 삭제됩니다)')) {
                     reset();
                   }
                 }}>
-                  초기화
+                  전체 초기화
                 </ResetButton>
                 <FilenameInput
                   type="text"
@@ -256,32 +297,21 @@ export default function EdgeEditorPage() {
                 <ExportButton onClick={handleExport}>HTML로 내보내기</ExportButton>
               </ControlsWrapper>
             </Header>
-            <RegionControls />
-            <CanvasWrapper>
-              <PanelGroup
-                direction="horizontal"
-                onLayout={(sizes) => updateRegionSize(sizes)}
-                style={{ width: '100%', height: '100%' }}
-              >
-                {regions.map((region, index) => (
-                  <React.Fragment key={region.id}>
-                    <Panel defaultSize={region.size} minSize={5}>
-                      <Region region={region} onZoneClick={handleZoneClick} />
-                    </Panel>
-                    {index < regions.length - 1 && <ResizeHandle />}
-                  </React.Fragment>
-                ))}
-              </PanelGroup>
-            </CanvasWrapper>
-          </MainContent>
-          <HiddenFileInput
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-          />
-        </EditorLayout>
+            <EditorLayout>
+                <MainColumn>
+                    {scenes.map(scene => (
+                        <SceneEditor key={scene.id} scene={scene} onZoneClick={handleZoneClick} />
+                    ))}
+                    <AddSceneButton onClick={handleAddScene}>+ 새 씬 추가</AddSceneButton>
+                </MainColumn>
+            </EditorLayout>
+        </PageWrapper>
+        
+        <HiddenFileInput
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+        />
       </>
   );
 }
-
-// ... 생략된 스타일 컴포넌트들 ...

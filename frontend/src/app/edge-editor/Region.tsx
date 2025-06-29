@@ -4,14 +4,12 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useEditorStore, Region as RegionType } from '@/store/editorStore';
-
-// [수정] isOver 관련 스타일 제거, isSelected 스타일 강조
 const Zone = styled.div<{ $isSelected: boolean }>`
   height: 100%;
   width: 100%;
   border: 2px dashed ${props => props.$isSelected ? '#e67e22' : '#3498db'};
   box-shadow: ${props => props.$isSelected ? '0 0 10px rgba(230, 126, 34, 0.5)' : 'none'};
-  padding: 1rem;
+  padding: 0.5rem; /* 1rem -> 0.5rem */
   box-sizing: border-box;
   background-color: #f0f8ff;
   display: flex;
@@ -21,6 +19,11 @@ const Zone = styled.div<{ $isSelected: boolean }>`
   overflow: hidden;
   transition: all 0.2s;
   cursor: pointer;
+
+  p {
+      font-size: 0.85rem; /* 폰트 크기 조정 */
+      color: #555;
+  }
 
   &:hover {
     background-color: #e0f0ff;
@@ -40,22 +43,23 @@ const ContentWrapper = styled.div`
 `;
 
 interface RegionProps {
+  sceneId: string; // [추가]
   region: RegionType;
-  // [추가] 부모 컴포넌트로부터 파일 선택을 트리거하는 함수를 받습니다.
-  onZoneClick: (regionId: string) => void; 
+  onZoneClick: () => void; // [수정] 인자 불필요
 }
 
-export const Region = ({ region, onZoneClick }: RegionProps) => {
+export const Region = ({ sceneId, region, onZoneClick }: RegionProps) => {
   const { selectedRegionId, setSelectedRegionId } = useEditorStore();
-  const isSelected = selectedRegionId === region.id;
+  
+  // [수정] isSelected 확인 로직 변경
+  const isSelected = selectedRegionId?.sceneId === sceneId && selectedRegionId?.regionId === region.id;
 
   const handleClick = () => {
-    // 콘텐츠가 없으면 파일 업로드 로직 실행
     if (!region.content) {
-      onZoneClick(region.id);
+      onZoneClick();
     } else {
-      // 콘텐츠가 있으면 선택 모드로 전환
-      setSelectedRegionId(region.id);
+      // [수정] setSelectedRegionId에 sceneId와 regionId를 전달
+      setSelectedRegionId(sceneId, region.id);
     }
   };
 

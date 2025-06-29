@@ -20,25 +20,26 @@ const ModalBackdrop = styled.div`
 
 const ModalContent = styled.div`
   background-color: white;
-  padding: 2rem;
-  border-radius: 8px;
+  padding: 1.2rem; /* 1.5rem -> 1.2rem */
+  border-radius: 6px; /* 8px -> 6px */
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   width: 90%;
-  max-width: 400px;
+  max-width: 280px; /* 320px -> 280px */
 `;
 
 const Title = styled.h3`
   margin-top: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.8rem; /* 1rem -> 0.8rem */
+  font-size: 1rem; /* 1.1rem -> 1rem */
 `;
 
 const Select = styled.select`
   width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1.5rem;
+  padding: 0.5rem; /* 0.6rem -> 0.5rem */
+  margin-bottom: 0.8rem; /* 1rem -> 0.8rem */
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 0.85rem; /* 0.9rem -> 0.85rem */
 `;
 
 const ButtonWrapper = styled.div`
@@ -47,14 +48,15 @@ const ButtonWrapper = styled.div`
   gap: 0.5rem;
 `;
 
-const Button = styled.button<{ primary?: boolean }>`
-  padding: 0.6rem 1.2rem;
+const Button = styled.button<{ $primary?: boolean }>`
+  padding: 0.4rem 0.8rem; /* 0.5rem 1rem -> 0.4rem 0.8rem */
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: 600;
-  background-color: ${props => props.primary ? '#3498db' : '#ecf0f1'};
-  color: ${props => props.primary ? 'white' : '#333'};
+  font-weight: 500; /* 600 -> 500 */
+  font-size: 0.85rem; /* 0.9rem -> 0.85rem */
+  background-color: ${props => props.$primary ? '#3498db' : '#ecf0f1'};
+  color: ${props => props.$primary ? 'white' : '#333'};
 
   &:hover {
     opacity: 0.9;
@@ -85,7 +87,7 @@ export const ContentTypeModal = ({ onClose, onConfirm }: ContentTypeModalProps) 
         </Select>
         <ButtonWrapper>
           <Button onClick={onClose}>취소</Button>
-          <Button primary onClick={handleConfirm}>확인</Button>
+          <Button $primary onClick={handleConfirm}>확인</Button>
         </ButtonWrapper>
       </ModalContent>
     </ModalBackdrop>

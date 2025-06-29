@@ -1,9 +1,9 @@
 // frontend/src/app/edge-editor/RegionControls.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useEditorStore, Region } from '@/store/editorStore';
+import { Region, Scene } from '@/store/editorStore';
 import { v4 as uuidv4 } from 'uuid';
 
 const ControlsWrapper = styled.div`
@@ -36,15 +36,25 @@ const Button = styled.button`
   }
 `;
 
-export const RegionControls = () => {
-  const [regionCount, setRegionCount] = useState(1);
-  const { setRegions } = useEditorStore();
+// [추가] Props 타입 정의
+interface RegionControlsProps {
+    activeScene: Scene;
+    setRegions: (regions: Region[]) => void;
+}
+
+export const RegionControls = ({ activeScene, setRegions }: RegionControlsProps) => {
+  const [regionCount, setRegionCount] = useState(activeScene.regions.length);
+  
+  // [추가] 활성 씬이 바뀔 때마다 입력 필드의 숫자를 업데이트
+  useEffect(() => {
+    setRegionCount(activeScene.regions.length);
+  }, [activeScene]);
 
   const handleApply = () => {
-    if (regionCount > 0 && regionCount <= 10) { // 최대 10개 영역으로 제한
+    if (regionCount > 0 && regionCount <= 10) {
       const newSize = 100 / regionCount;
-      const newRegions: Region[] = Array.from({ length: regionCount }, (_, i) => ({
-        id: uuidv4(), // 각 영역에 고유 ID 부여
+      const newRegions: Region[] = Array.from({ length: regionCount }, () => ({
+        id: uuidv4(),
         size: newSize,
         content: null,
       }));
@@ -63,7 +73,7 @@ export const RegionControls = () => {
         min="1"
         max="10"
         value={regionCount}
-        onChange={(e) => setRegionCount(parseInt(e.target.value, 10))}
+        onChange={(e) => setRegionCount(parseInt(e.target.value, 10) || 1)}
       />
       <Button onClick={handleApply}>적용</Button>
     </ControlsWrapper>
