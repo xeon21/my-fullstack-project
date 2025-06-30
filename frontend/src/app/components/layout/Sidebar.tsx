@@ -27,12 +27,12 @@ interface MenuItem {
 }
 
 export const menuItems: MenuItem[] = [
-    { title: 'Admin', icon: '👑', path: '/admin'}, //permission: 'menu_admin_view' },
+    { title: 'Admin', icon: '👑', path: '/admin' , permission: 'menu_admin_view' },
     {
         title: 'Dashboard',
         icon: '📊',
         pathPrefix: '/dashboard',
-        //permission: 'menu_dashboard_view',
+        permission: 'menu_dashboard_view',
         children: [
             { title: 'Server Status', path: '/dashboard/server-status' },
             { title: '유저통계', path: '/dashboard/user-statistics' }
@@ -42,7 +42,7 @@ export const menuItems: MenuItem[] = [
     { title: 'Tag Status', icon: '🏷️', path: '/tag-status'},
     { title: 'Sensor Status', icon: '🌡️', path: '/sensor-status'},
     { title: 'Product Search', icon: '🔍', path: '/product-search'},
-    { title: 'Infotab+', icon: 'ℹ️', path: '/edge-editor' },
+    { title: 'Editor', icon: 'ℹ️', path: '/edge-editor' },
 ];
 
 

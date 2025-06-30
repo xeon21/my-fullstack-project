@@ -101,7 +101,7 @@ export default function AdminPage() {
   return (
     <DashboardLayout $bgColor="#1c2833">
         <ControlsContainer>
-            <PageTitle>나무 정보</PageTitle>
+            <PageTitle>유저정보</PageTitle>
             <div>
               <SearchInput
                 type="number"

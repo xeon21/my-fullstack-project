@@ -1,9 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { AuthLoginRepository} from './auth.repository';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(private readonly jwtService: JwtService,private readonly mysqlProvider: AuthLoginRepository) {}
 
   // 실제로는 DB에서 유저를 찾아 비밀번호를 비교해야 합니다.
   // 여기서는 예시를 위해 하드코딩된 유저 정보로 검증합니다.
@@ -12,8 +13,11 @@ export class AuthService {
     
     if (username === 'test' && pass === '1234') {
       // 비밀번호는 제외하고 유저 정보를 반환합니다.
+        console.log({ userId: 1, username: 'test', permissions: ['menu_dashboard_view'] });
       return { userId: 1, username: 'test', permissions: ['menu_dashboard_view'] };
+     
     }else if (username === 'admin' && pass === 'admin') {
+       console.log( { userId: 2, username: 'admin', permissions: ['menu_admin_view', 'menu_dashboard_view', 'menu_user_management'] });
       return { userId: 2, username: 'admin', permissions: ['menu_admin_view', 'menu_dashboard_view', 'menu_user_management'] };
     }
     return null;
@@ -24,7 +28,12 @@ export class AuthService {
     if (!validatedUser) {
       throw new UnauthorizedException('로그인 정보가 올바르지 않습니다.');
     }
-    const payload = { username: validatedUser.username, sub: validatedUser.userId };
+     const payload = { 
+        username: validatedUser.username, 
+        sub: validatedUser.userId,
+        permissions: validatedUser.permissions // <-- 이 줄을 추가해주세요!
+    };
+
     return {
       accessToken: this.jwtService.sign(payload),
     };
