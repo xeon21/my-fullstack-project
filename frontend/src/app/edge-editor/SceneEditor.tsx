@@ -50,9 +50,11 @@ const StyledInput = styled.input`
   font-size: 0.8rem;
 `;
 
-const StyledButton = styled.button<{ secondary?: boolean }>`
+// [수정] secondary prop을 $secondary로 변경합니다.
+const StyledButton = styled.button<{ $secondary?: boolean }>`
   padding: 0.3rem 0.6rem;
-  background-color: ${props => props.secondary ? '#95a5a6' : '#3498db'};
+  /* [수정] props.secondary를 props.$secondary로 변경합니다. */
+  background-color: ${props => props.$secondary ? '#95a5a6' : '#3498db'};
   color: white;
   border: none;
   border-radius: 4px;
@@ -61,7 +63,7 @@ const StyledButton = styled.button<{ secondary?: boolean }>`
   font-size: 0.8rem;
 
   &:hover {
-    background-color: ${props => props.secondary ? '#7f8c8d' : '#2980b9'};
+    background-color: ${props => props.$secondary ? '#7f8c8d' : '#2980b9'};
   }
 `;
 
@@ -152,7 +154,8 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
                 min="1"
             />
         </ControlGroup>
-        <StyledButton secondary onClick={handleResetScene}>씬 초기화</StyledButton>
+        {/* [수정] secondary를 $secondary로 변경하여 전달합니다. */}
+        <StyledButton $secondary onClick={handleResetScene}>씬 초기화</StyledButton>
       </ControlBar>
       <CanvasWrapper>
         <PanelGroup
