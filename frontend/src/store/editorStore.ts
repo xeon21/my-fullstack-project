@@ -35,13 +35,18 @@ const createNewRegion = (): Region => ({
     content: null,
 });
 
+// [추가] 저장되는 파일의 전체 상태 타입 정의
+export interface SavedState {
+    scenes: Scene[];
+}
+
 interface EditorState {
   scenes: Scene[];
-  activeSceneId: string | null; // [복원] 활성 씬 ID
+  activeSceneId: string | null;
   selectedRegionId: { sceneId: string; regionId: string } | null;
 
   addScene: (name: string) => void;
-  setActiveSceneId: (id: string) => void; // [복원] 활성 씬 설정 액션
+  setActiveSceneId: (id: string) => void;
   updateRegionSize: (sceneId: string, newSizes: number[]) => void;
   updateRegionContent: (sceneId: string, regionId: string, content: Content | null) => void;
   setRegions: (sceneId: string, newRegions: Region[]) => void;
@@ -49,20 +54,20 @@ interface EditorState {
   reset: () => void;
   resetScene: (sceneId: string) => void;
   updateSceneTransitionTime: (sceneId: string, time: number) => void;
+  loadState: (savedState: SavedState) => void; // [추가] 불러오기 액션
 }
 
 const initialScene = createNewScene('기본 씬');
 
 const initialState = {
   scenes: [initialScene],
-  activeSceneId: initialScene.id, // [복원] 초기 활성 씬 ID 설정
+  activeSceneId: initialScene.id,
   selectedRegionId: null,
 };
 
 export const useEditorStore = create<EditorState>((set) => ({
   ...initialState,
 
-  // [복원] 활성 씬을 설정하는 액션
   setActiveSceneId: (id) => set({ activeSceneId: id, selectedRegionId: null }),
 
   addScene: (name) =>
@@ -70,7 +75,7 @@ export const useEditorStore = create<EditorState>((set) => ({
       const newScene = createNewScene(name);
       return {
         scenes: [...state.scenes, newScene],
-        activeSceneId: newScene.id, // 새 씬 추가 시 활성화
+        activeSceneId: newScene.id,
       };
     }),
 
@@ -132,6 +137,13 @@ export const useEditorStore = create<EditorState>((set) => ({
         ),
         selectedRegionId: null,
     })),
+    
+  // [추가] 불러온 데이터로 상태를 덮어쓰는 액션
+  loadState: (savedState) => set({
+    scenes: savedState.scenes,
+    activeSceneId: savedState.scenes[0]?.id || null, // 첫 번째 씬을 활성화
+    selectedRegionId: null,
+  }),
 
   reset: () => {
     const newInitialScene = createNewScene('기본 씬');

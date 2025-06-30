@@ -3,13 +3,19 @@ import { AppModule } from './app.module';
 import { WinstonModule } from 'nest-winston';
 import { winstonLoggerOptions } from './logger/winston.logger';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import * as bodyParser from 'body-parser'; // [추가] body-parser 임포트
 
 async function bootstrap() {
   
   const app = await NestFactory.create(AppModule,{
     logger: WinstonModule.createLogger(winstonLoggerOptions),
   });
-   app.enableCors();
+  
+  // [추가] 요청 데이터 크기 제한을 늘립니다.
+  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+  app.enableCors();
   
   //Swagger 설정 시작
   const config = new DocumentBuilder()
@@ -19,6 +25,7 @@ async function bootstrap() {
     .addTag('Login') // API 그룹 태그 (컨트롤러별로 그룹핑 가능)
     .addTag('UserInfo')
     .addTag('Game')
+    .addTag('Project') 
     // .addBearerAuth() // JWT 인증 등을 사용하는 경우 추가 (선택 사항)
     .build();
 

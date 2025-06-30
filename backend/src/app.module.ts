@@ -4,6 +4,7 @@ import { GameModule } from './game/game.modules';
 import { LoginModule } from './login/login.modules';
 import { UserInfoModule } from './userinfo/userinfo.modules';
 import { AuthModule } from './auth/auth.modules';
+import { ProjectModule } from './project/project.module';
 
 @Module({
 
@@ -24,6 +25,7 @@ import { AuthModule } from './auth/auth.modules';
     LoginModule,
     UserInfoModule,
     AuthModule,
+    ProjectModule,
   ],
    
 })

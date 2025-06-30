@@ -42,7 +42,7 @@ export const menuItems: MenuItem[] = [
     { title: 'Tag Status', icon: '🏷️', path: '/tag-status'},
     { title: 'Sensor Status', icon: '🌡️', path: '/sensor-status'},
     { title: 'Product Search', icon: '🔍', path: '/product-search'},
-    { title: 'Editor', icon: 'ℹ️', path: '/edge-editor' },
+    { title: 'Editor',  icon: 'ℹ️',   path: '/editor/new'},
 ];
 
 

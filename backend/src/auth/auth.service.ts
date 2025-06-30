@@ -1,24 +1,23 @@
+// backend/src/auth/auth.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthLoginRepository} from './auth.repository';
+import { AuthRepository } from './auth.repository'; // [수정]
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService,private readonly mysqlProvider: AuthLoginRepository) {}
+  // [수정] AuthRepository를 주입받습니다.
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly authRepository: AuthRepository
+  ) {}
 
-  // 실제로는 DB에서 유저를 찾아 비밀번호를 비교해야 합니다.
-  // 여기서는 예시를 위해 하드코딩된 유저 정보로 검증합니다.
+  // [수정] DB에서 사용자를 찾아 비밀번호를 비교합니다.
   async validateUser(username: string, pass: string): Promise<any> {
-    
-    
-    if (username === 'test' && pass === '1234') {
-      // 비밀번호는 제외하고 유저 정보를 반환합니다.
-        console.log({ userId: 1, username: 'test', permissions: ['menu_dashboard_view'] });
-      return { userId: 1, username: 'test', permissions: ['menu_dashboard_view'] };
-     
-    }else if (username === 'admin' && pass === 'admin') {
-       console.log( { userId: 2, username: 'admin', permissions: ['menu_admin_view', 'menu_dashboard_view', 'menu_user_management'] });
-      return { userId: 2, username: 'admin', permissions: ['menu_admin_view', 'menu_dashboard_view', 'menu_user_management'] };
+    const user = await this.authRepository.findUserByUsername(username);
+    // 실제 애플리케이션에서는 bcrypt.compare(pass, user.password) 와 같이 해시 비교를 해야 합니다.
+    if (user && user.password === pass) {
+      const { password, ...result } = user; // 비밀번호를 제외한 나머지 정보만 반환
+      return result;
     }
     return null;
   }
@@ -28,12 +27,12 @@ export class AuthService {
     if (!validatedUser) {
       throw new UnauthorizedException('로그인 정보가 올바르지 않습니다.');
     }
-     const payload = { 
+    // [수정] payload에 권한 정보도 추가
+    const payload = { 
         username: validatedUser.username, 
         sub: validatedUser.userId,
-        permissions: validatedUser.permissions // <-- 이 줄을 추가해주세요!
+        permissions: validatedUser.permissions
     };
-
     return {
       accessToken: this.jwtService.sign(payload),
     };

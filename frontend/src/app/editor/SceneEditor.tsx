@@ -1,4 +1,4 @@
-// frontend/src/app/edge-editor/SceneEditor.tsx
+// frontend/src/app/editor/SceneEditor.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -50,10 +50,8 @@ const StyledInput = styled.input`
   font-size: 0.8rem;
 `;
 
-// [수정] secondary prop을 $secondary로 변경합니다.
 const StyledButton = styled.button<{ $secondary?: boolean }>`
   padding: 0.3rem 0.6rem;
-  /* [수정] props.secondary를 props.$secondary로 변경합니다. */
   background-color: ${props => props.$secondary ? '#95a5a6' : '#3498db'};
   color: white;
   border: none;
@@ -154,7 +152,6 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
                 min="1"
             />
         </ControlGroup>
-        {/* [수정] secondary를 $secondary로 변경하여 전달합니다. */}
         <StyledButton $secondary onClick={handleResetScene}>씬 초기화</StyledButton>
       </ControlBar>
       <CanvasWrapper>
@@ -167,7 +164,7 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
             <React.Fragment key={region.id}>
               <Panel defaultSize={region.size} minSize={5}>
                 <Region 
-                  sceneId={scene.id}
+                  sceneId={scene.id} // [수정] sceneId를 prop으로 전달
                   region={region} 
                   onZoneClick={() => onZoneClick(scene.id, region.id)} 
                 />
