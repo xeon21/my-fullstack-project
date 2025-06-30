@@ -45,12 +45,14 @@ const ControlsWrapper = styled.div`
   align-items: center;
 `;
 
-const ControlButton = styled.button<{ primary?: boolean; secondary?: boolean; danger?: boolean; }>`
+// [수정] 모든 커스텀 prop에 '$' 접두사 추가
+const ControlButton = styled.button<{ $primary?: boolean; $secondary?: boolean; $danger?: boolean; $fileformat?: boolean }>`
   padding: 0.4rem 0.8rem;
   background-color: ${props => 
-    props.primary ? '#e67e22' : 
-    props.danger ? '#c0392b' :
-    props.secondary ? '#3498db' : 
+    props.$primary ? '#e67e22' : 
+    props.$danger ? '#c0392b' :
+    props.$secondary ? '#3498db' : 
+    props.$fileformat ? '#2ecc71' :
     '#95a5a6'};
   color: white;
   border: none;
@@ -226,7 +228,29 @@ export default function EdgeEditorPage() {
     setIsLoadModalOpen(false);
   };
   
-  const handleExport = () => { /* ... 이전과 동일 */ };
+  const handleLoadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const savedState = JSON.parse(e.target?.result as string);
+                if (savedState && Array.isArray(savedState.scenes)) {
+                    loadState(savedState);
+                } else {
+                    alert('올바른 형식의 에디터 파일이 아닙니다.');
+                }
+            } catch (error) {
+                alert('파일을 읽는 도중 오류가 발생했습니다.');
+                console.error("파일 파싱 오류:", error);
+            }
+        };
+        reader.readAsText(file);
+    }
+    if (event.target) event.target.value = '';
+  };
+
+  const handleExport = () => { /* 이전과 동일 */ };
   
   return (
       <>
@@ -251,10 +275,10 @@ export default function EdgeEditorPage() {
                 placeholder="프로젝트 이름"
               />
               <ControlsWrapper>
-                <ControlButton onClick={handleSave}>DB에 저장</ControlButton>
-                <ControlButton onClick={() => setIsLoadModalOpen(true)}>불러오기</ControlButton>
-                <ControlButton danger onClick={() => router.push('/editor/new')}>새 프로젝트</ControlButton>
-                <ControlButton primary onClick={handleExport}>HTML로 내보내기</ControlButton>
+                <ControlButton $fileformat onClick={handleSave}>DB에 저장</ControlButton>
+                <ControlButton $fileformat onClick={() => setIsLoadModalOpen(true)}>불러오기</ControlButton>
+                <ControlButton $danger onClick={() => router.push('/editor/new')}>새 프로젝트</ControlButton>
+                <ControlButton $primary onClick={handleExport}>HTML로 내보내기</ControlButton>
               </ControlsWrapper>
             </Header>
             <EditorLayout>
@@ -264,7 +288,6 @@ export default function EdgeEditorPage() {
                     ))}
                     <AddSceneButton onClick={handleAddScene}>+ 새 씬 추가</AddSceneButton>
                 </MainColumn>
-                {/* [삭제] PropertyInspector 컴포넌트 완전 제거 */}
             </EditorLayout>
         </PageWrapper>
         
@@ -273,13 +296,11 @@ export default function EdgeEditorPage() {
           ref={fileInputRef}
           onChange={handleFileChange}
         />
-        {/* 파일로 불러오기 기능용 숨겨진 input */}
         <HiddenFileInput
             type="file"
             ref={loadProjectInputRef}
             accept=".json"
-            // handleLoadFile은 현재 DB 불러오기 방식으로 대체되어 사용되지 않습니다.
-            // 파일 불러오기 기능을 다시 추가하려면 이 부분에 핸들러를 연결해야 합니다.
+            onChange={handleLoadFile}
         />
       </>
   );
