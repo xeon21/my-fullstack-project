@@ -44,10 +44,19 @@ export interface SavedState {
     scenes: Scene[];
 }
 
+
+// [추가] 덮어쓰기 확인에 필요한 정보를 담을 인터페이스
+export interface OverwriteConfirmState {
+  sceneId: string;
+  regionId: string;
+  file: File;
+}
+
 interface EditorState {
   scenes: Scene[];
   activeSceneId: string | null;
   selectedRegionId: { sceneId: string; regionId: string } | null;
+  overwriteConfirm: OverwriteConfirmState | null;
 
   addScene: (name: string) => void;
   setActiveSceneId: (id: string) => void;
@@ -60,6 +69,10 @@ interface EditorState {
   updateSceneTransitionTime: (sceneId: string, time: number) => void;
   updateSceneSizePreset: (sceneId: string, size: SceneSize) => void; // [추가] 씬 크기 변경 액션
   loadState: (savedState: SavedState) => void;
+
+  setOverwriteConfirm: (data: OverwriteConfirmState) => void;
+  clearOverwriteConfirm: () => void;
+  
 }
 
 const initialScene = createNewScene('기본 씬');
@@ -68,12 +81,17 @@ const initialState = {
   scenes: [initialScene],
   activeSceneId: initialScene.id,
   selectedRegionId: null,
+  overwriteConfirm: null, // 초기 상태 추가
 };
 
 export const useEditorStore = create<EditorState>((set) => ({
   ...initialState,
 
   setActiveSceneId: (id) => set({ activeSceneId: id, selectedRegionId: null }),
+
+  // --- [추가 시작] 덮어쓰기 관련 액션 구현 ---
+  setOverwriteConfirm: (data) => set({ overwriteConfirm: data }),
+  clearOverwriteConfirm: () => set({ overwriteConfirm: null }),
 
   addScene: (name) =>
     set((state) => {
@@ -162,7 +180,8 @@ export const useEditorStore = create<EditorState>((set) => ({
     set({
       scenes: [newInitialScene],
       activeSceneId: newInitialScene.id,
-      selectedRegionId: null
+      selectedRegionId: null,
+       overwriteConfirm: null,
     });
   },
 }));

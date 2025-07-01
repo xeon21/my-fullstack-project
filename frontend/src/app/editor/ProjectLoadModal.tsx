@@ -144,11 +144,18 @@ const ThumbnailWrapper = styled.div`
     }
 `;
 
-const PreviewPopup = styled.div`
+// [수정] PreviewPopup이 동적 top, left 값을 받도록 인터페이스와 스타일 수정
+interface PreviewPopupProps {
+  $top: number;
+  $left: number;
+}
+
+const PreviewPopup = styled.div<PreviewPopupProps>`
   position: fixed;
-  top: 30%;
-  left: 25%;
-  transform: translateX(-50%);
+  top: ${props => props.$top}px;
+  left: ${props => props.$left}px;
+  /* [수정] transform 속성을 변경하여 세로 중앙 정렬을 개선합니다. */
+  transform: translateY(-50%);
   width: 240px;
   height: 135px;
   border: 1px solid #ccc;
@@ -221,6 +228,8 @@ export const ProjectLoadModal = ({ onClose, onLoad }: ProjectLoadModalProps) => 
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<PreviewData | null>(null);
+  // [추가] 미리보기 팝업의 위치를 저장할 state
+  const [previewPosition, setPreviewPosition] = useState<{ top: number, left: number } | null>(null);
 
   const [authorSearch, setAuthorSearch] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -259,17 +268,35 @@ export const ProjectLoadModal = ({ onClose, onLoad }: ProjectLoadModalProps) => 
     setCurrentPage(page);
   }
 
-  const handleMouseEnter = (thumbnail: string | null) => {
+  // [수정] handleMouseEnter가 마우스 이벤트를 받아 위치를 계산하도록 변경
+  const handleMouseEnter = (event: React.MouseEvent<HTMLTableRowElement>, thumbnail: string | null) => {
     if (thumbnail && (thumbnail.startsWith('data:image') || thumbnail.startsWith('data:video'))) {
       const type = thumbnail.startsWith('data:image') ? 'image' : 'video';
       setPreview({ src: thumbnail, type });
+
+      const rowRect = event.currentTarget.getBoundingClientRect();
+      const firstColumn = event.currentTarget.cells[0];
+
+      if(firstColumn) {
+        const firstColumnRect = firstColumn.getBoundingClientRect();
+        const popupWidth = 240; 
+        // 첫 번째 컬럼(프로젝트 이름) 바로 오른쪽에 팝업이 나타나도록 left 위치 계산
+        const left = firstColumnRect.right + - (popupWidth * 0.3); 
+        // 행의 세로 중앙에 팝업이 나타나도록 top 위치 계산
+        const top = rowRect.top + (rowRect.height / 2);
+        
+        setPreviewPosition({ top, left });
+      }
+
     } else {
       setPreview(null);
     }
   };
 
+  // [수정] handleMouseLeave가 위치 정보도 함께 초기화하도록 변경
   const handleMouseLeave = () => {
     setPreview(null);
+    setPreviewPosition(null);
   };
 
   return (
@@ -306,7 +333,7 @@ export const ProjectLoadModal = ({ onClose, onLoad }: ProjectLoadModalProps) => 
                 <tr><Td colSpan={5}>로딩 중...</Td></tr>
               ) : (
                 projects.map((project) => (
-                  <tr key={project.id} onMouseEnter={() => handleMouseEnter(project.thumbnail)}>
+                  <tr key={project.id} onMouseEnter={(e) => handleMouseEnter(e, project.thumbnail)}>
                     <Td title={project.name}>{project.name}</Td>
                     <Td title={project.author || 'N/A'}>{project.author || 'N/A'}</Td>
                     <Td>
@@ -348,8 +375,8 @@ export const ProjectLoadModal = ({ onClose, onLoad }: ProjectLoadModalProps) => 
         <CloseButton onClick={onClose}>닫기</CloseButton>
       </ModalContent>
       
-      {preview && (
-        <PreviewPopup>
+      {preview && previewPosition && (
+        <PreviewPopup $top={previewPosition.top} $left={previewPosition.left}>
           {preview.type === 'image' ? <img src={preview.src} alt="preview" /> : 
            preview.type === 'video' ? <video src={preview.src} muted autoPlay loop /> :
            null

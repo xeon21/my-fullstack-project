@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { useEditorStore, Scene as SceneType, Region as RegionType, Content, SceneSize } from '@/store/editorStore';
+import { useEditorStore, Scene as SceneType, Region as RegionType, SceneSize } from '@/store/editorStore';
 import { v4 as uuidv4 } from 'uuid';
 import { Region } from './Region';
 
@@ -72,13 +72,11 @@ const StyledButton = styled.button<{ $secondary?: boolean }>`
   }
 `;
 
-// [수정] sizePreset prop을 $sizePreset으로 변경
 const CanvasWrapper = styled.div<{ $sizePreset: SceneSize }>`
   width: 100%;
   max-width: 1200px;
   margin: 1rem auto 0 auto;
   border: 1px solid #d1d5db;
-  /* [수정] props.sizePreset을 props.$sizePreset으로 변경 */
   aspect-ratio: ${props => props.$sizePreset === '1920x160' ? '12 / 1' : '1920 / 540'};
   display: flex;
 `;
@@ -95,18 +93,19 @@ const ResizeHandle = styled(PanelResizeHandle)`
   }
 `;
 
+// [수정] onFileDrop을 prop으로 받도록 인터페이스를 수정합니다.
 interface SceneEditorProps {
   scene: SceneType;
   onZoneClick: (sceneId: string, regionId: string) => void;
+  onFileDrop: (sceneId: string, regionId: string, file: File) => void;
 }
 
-export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
+export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps) => {
   const { 
       updateRegionSize, 
       setRegions, 
       updateSceneTransitionTime, 
       resetScene, 
-      updateRegionContent,
       updateSceneSizePreset
   } = useEditorStore();
   
@@ -144,30 +143,6 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
     }
   }
 
-  const handleFileDrop = (regionId: string, file: File) => {
-    const contentType = file.type.startsWith('image') ? 'image' : 
-                        file.type.startsWith('video') ? 'video' : 'webpage';
-
-    if (contentType === 'webpage' && !/\.(html|htm)$/i.test(file.name)) {
-        alert('웹페이지 콘텐츠는 .html 또는 .htm 파일만 가능합니다.');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        updateRegionContent(scene.id, regionId, {
-            type: contentType,
-            src: e.target?.result as string,
-        });
-    };
-
-    if (contentType === 'webpage') {
-        reader.readAsText(file);
-    } else {
-        reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <SceneWrapper>
       <ControlBar>
@@ -204,7 +179,6 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
         </ControlGroup>
         <StyledButton $secondary onClick={handleResetScene}>씬 초기화</StyledButton>
       </ControlBar>
-      {/* [수정] CanvasWrapper에 전달하는 prop을 $sizePreset으로 변경 */}
       <CanvasWrapper $sizePreset={scene.sizePreset}>
         <PanelGroup
           direction="horizontal"
@@ -219,7 +193,8 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
                   region={region} 
                   canvasHeight={scene.sizePreset === '1920x160' ? 160 : 540}
                   onZoneClick={() => onZoneClick(scene.id, region.id)}
-                  onFileDrop={(file) => handleFileDrop(region.id, file)}
+                  // [수정] onFileDrop을 Region 컴포넌트로 전달합니다.
+                  onFileDrop={(file) => onFileDrop(scene.id, region.id, file)}
                 />
               </Panel>
               {index < scene.regions.length - 1 && <ResizeHandle />}

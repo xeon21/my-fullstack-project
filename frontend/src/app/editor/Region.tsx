@@ -2,16 +2,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { useEditorStore, Region as RegionType } from '@/store/editorStore';
 
 const Zone = styled.div<{ $isSelected: boolean; $isDragOver: boolean; }>`
   position: relative;
   height: 100%;
   width: 100%;
-  border: 2px dashed ${props => 
+  border: 2px dashed ${props =>
     props.$isDragOver ? '#16a085' :
-    props.$isSelected ? '#e67e22' : 
+    props.$isSelected ? '#e67e22' :
     '#3498db'};
   box-shadow: ${props => props.$isSelected ? '0 0 10px rgba(230, 126, 34, 0.5)' : 'none'};
   padding: 0.5rem;
@@ -63,10 +63,32 @@ const SizeDisplay = styled.div`
   pointer-events: none;
 `;
 
+const ModifyButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  ${Zone}:hover & {
+    opacity: 1;
+  }
+`;
+
+// [수정] onFileDrop prop을 포함하도록 인터페이스를 수정합니다.
 interface RegionProps {
   sceneId: string;
   region: RegionType;
-  canvasHeight: number; // [수정] 가상 높이를 prop으로 받음
+  canvasHeight: number;
   onZoneClick: () => void;
   onFileDrop: (file: File) => void;
 }
@@ -74,12 +96,18 @@ interface RegionProps {
 const VIRTUAL_CANVAS_WIDTH = 1920;
 
 export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop }: RegionProps) => {
-  const { selectedRegionId, setSelectedRegionId } = useEditorStore();
+  const { selectedRegionId, setSelectedRegionId, setOverwriteConfirm } = useEditorStore();
   const [isDragOver, setIsDragOver] = useState(false);
-  
+
   const isSelected = selectedRegionId?.sceneId === sceneId && selectedRegionId?.regionId === region.id;
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName === 'BUTTON') {
+      e.stopPropagation();
+      onZoneClick();
+      return;
+    }
+    
     if (!region.content) {
       onZoneClick();
     } else {
@@ -87,19 +115,23 @@ export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop 
     }
   };
 
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragOver(true);
-  };
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); e.stopPropagation();
-  };
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
-  };
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); };
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(false); };
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
-    if (!region.content && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFileDrop(e.dataTransfer.files[0]);
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+
+    if (file) {
+      if (region.content) {
+        setOverwriteConfirm({ sceneId, regionId: region.id, file });
+      } else {
+        // [수정] onFileDrop을 호출하여 파일을 처리합니다.
+        onFileDrop(file);
+      }
       e.dataTransfer.clearData();
     }
   };
@@ -133,6 +165,11 @@ export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop 
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {region.content && (
+        <ModifyButton onClick={onZoneClick}>
+          수정
+        </ModifyButton>
+      )}
       <ContentWrapper>
         {renderContent()}
       </ContentWrapper>
