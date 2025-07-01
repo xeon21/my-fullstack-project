@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { useSearchParams, useRouter } from 'next/navigation';
-import axios from 'axios'; // [수정] isAxiosError를 위해 기본 axios도 임포트합니다.
+import axios from 'axios';
 import axiosInstance from '@/lib/axios';
 import { useEditorStore, Content, SavedState } from '@/store/editorStore';
 import { useAuthStore } from '@/store/authStore';
@@ -53,7 +53,7 @@ const ControlButton = styled.button<{ $primary?: boolean; $secondary?: boolean; 
     props.$primary ? '#e67e22' : 
     props.$danger ? '#c0392b' :
     props.$secondary ? '#3498db' : 
-    '#95a5a6'};
+    '#7f8c8d'}; /* 기본색상 수정 */
   color: white;
   border: none;
   border-radius: 4px;
@@ -114,7 +114,6 @@ export default function EdgeEditorPage() {
   const [isContentTypeModalOpen, setIsContentTypeModalOpen] = useState(false);
   const [uploadInfo, setUploadInfo] = useState<{ sceneId: string, regionId: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const loadProjectInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const projectId = projectIdFromUrl ? parseInt(projectIdFromUrl, 10) : null;
@@ -193,6 +192,7 @@ export default function EdgeEditorPage() {
     }
   };
 
+  // [복원] 저장 기능 핸들러
   const handleSave = async () => {
     if (!projectName.trim()) {
         alert('프로젝트 이름을 입력해주세요.');
@@ -220,6 +220,7 @@ export default function EdgeEditorPage() {
     }
   };
 
+  // [복원] 불러오기 기능 핸들러
   const handleLoadProject = (projectId: number) => {
     router.push(`/editor/new?id=${projectId}`);
     setIsLoadModalOpen(false);
@@ -250,8 +251,11 @@ export default function EdgeEditorPage() {
                 placeholder="프로젝트 이름"
               />
               <ControlsWrapper>
-                <ControlButton onClick={handleSave}>DB에 저장</ControlButton>
-                <ControlButton onClick={() => setIsLoadModalOpen(true)}>불러오기</ControlButton>
+                {/* [복원] DB 저장/수정하기 버튼 */}
+                <ControlButton onClick={handleSave}>
+                    {currentProjectId ? '수정하기' : 'DB에 저장'}
+                </ControlButton>
+                <ControlButton $secondary onClick={() => setIsLoadModalOpen(true)}>불러오기</ControlButton>
                 <ControlButton $danger onClick={() => router.push('/editor/new')}>새 프로젝트</ControlButton>
                 <ControlButton $primary onClick={handleExport}>HTML로 내보내기</ControlButton>
               </ControlsWrapper>
@@ -271,7 +275,6 @@ export default function EdgeEditorPage() {
           ref={fileInputRef}
           onChange={handleFileChange}
         />
-        {/* 파일로 불러오기 기능은 이제 DB 연동으로 대체되었습니다. */}
       </>
   );
 }

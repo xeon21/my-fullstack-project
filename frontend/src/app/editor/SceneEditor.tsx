@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { useEditorStore, Scene as SceneType, Region as RegionType } from '@/store/editorStore';
+import { useEditorStore, Scene as SceneType, Region as RegionType, Content } from '@/store/editorStore';
 import { v4 as uuidv4 } from 'uuid';
 import { Region } from './Region';
 
@@ -92,7 +92,8 @@ interface SceneEditorProps {
 }
 
 export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
-  const { updateRegionSize, setRegions, updateSceneTransitionTime, resetScene } = useEditorStore();
+  // [수정] updateRegionContent를 스토어에서 가져옵니다.
+  const { updateRegionSize, setRegions, updateSceneTransitionTime, resetScene, updateRegionContent } = useEditorStore();
   
   const [regionCount, setRegionCount] = useState(scene.regions.length);
   const [transitionTime, setTransitionTime] = useState(scene.transitionTime);
@@ -127,6 +128,31 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
         resetScene(scene.id);
     }
   }
+
+  const handleFileDrop = (regionId: string, file: File) => {
+    const contentType = file.type.startsWith('image') ? 'image' : 
+                        file.type.startsWith('video') ? 'video' : 'webpage';
+
+    if (contentType === 'webpage' && !/\.(html|htm)$/i.test(file.name)) {
+        alert('웹페이지 콘텐츠는 .html 또는 .htm 파일만 가능합니다.');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const newContent: Content = {
+            type: contentType,
+            src: e.target?.result as string,
+        };
+        updateRegionContent(scene.id, regionId, newContent);
+    };
+
+    if (contentType === 'webpage') {
+        reader.readAsText(file);
+    } else {
+        reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <SceneWrapper>
@@ -164,9 +190,10 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
             <React.Fragment key={region.id}>
               <Panel defaultSize={region.size} minSize={5}>
                 <Region 
-                  sceneId={scene.id} // [수정] sceneId를 prop으로 전달
+                  sceneId={scene.id}
                   region={region} 
-                  onZoneClick={() => onZoneClick(scene.id, region.id)} 
+                  onZoneClick={() => onZoneClick(scene.id, region.id)}
+                  onFileDrop={(file) => handleFileDrop(region.id, file)}
                 />
               </Panel>
               {index < scene.regions.length - 1 && <ResizeHandle />}
