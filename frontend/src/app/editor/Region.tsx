@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import { useEditorStore, Region as RegionType } from '@/store/editorStore';
 
 const Zone = styled.div<{ $isSelected: boolean; $isDragOver: boolean; }>`
-  position: relative; /* [추가] 자식 요소의 absolute 위치를 위한 기준점 */
+  position: relative;
   height: 100%;
   width: 100%;
   border: 2px dashed ${props => 
@@ -49,7 +49,6 @@ const ContentWrapper = styled.div`
   }
 `;
 
-// [추가] 사이즈 표시를 위한 스타일 컴포넌트
 const SizeDisplay = styled.div`
   position: absolute;
   bottom: 5px;
@@ -61,22 +60,20 @@ const SizeDisplay = styled.div`
   font-family: 'Courier New', Courier, monospace;
   font-weight: bold;
   border-radius: 4px;
-  pointer-events: none; /* 마우스 이벤트 방해 방지 */
+  pointer-events: none;
 `;
-
 
 interface RegionProps {
   sceneId: string;
   region: RegionType;
+  canvasHeight: number; // [수정] 가상 높이를 prop으로 받음
   onZoneClick: () => void;
   onFileDrop: (file: File) => void;
 }
 
-// 가상의 전체 캔버스 크기를 정의합니다 (1920px 너비 기준)
 const VIRTUAL_CANVAS_WIDTH = 1920;
-const VIRTUAL_CANVAS_HEIGHT = 240; // 1920 / 8 (8:1 비율)
 
-export const Region = ({ sceneId, region, onZoneClick, onFileDrop }: RegionProps) => {
+export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop }: RegionProps) => {
   const { selectedRegionId, setSelectedRegionId } = useEditorStore();
   const [isDragOver, setIsDragOver] = useState(false);
   
@@ -91,30 +88,18 @@ export const Region = ({ sceneId, region, onZoneClick, onFileDrop }: RegionProps
   };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
+    e.preventDefault(); e.stopPropagation(); setIsDragOver(true);
   };
-
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
   };
-
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
+    e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
   };
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-
+    e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
     if (!region.content && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      onFileDrop(file);
+      onFileDrop(e.dataTransfer.files[0]);
       e.dataTransfer.clearData();
     }
   };
@@ -135,9 +120,8 @@ export const Region = ({ sceneId, region, onZoneClick, onFileDrop }: RegionProps
     }
   };
 
-  // [추가] 표시할 크기 텍스트 계산
   const virtualWidth = Math.round(VIRTUAL_CANVAS_WIDTH * (region.size / 100));
-  const sizeText = `${virtualWidth} x ${VIRTUAL_CANVAS_HEIGHT}`;
+  const sizeText = `${virtualWidth} x ${canvasHeight}`;
 
   return (
     <Zone
@@ -152,7 +136,6 @@ export const Region = ({ sceneId, region, onZoneClick, onFileDrop }: RegionProps
       <ContentWrapper>
         {renderContent()}
       </ContentWrapper>
-      {/* [추가] 계산된 크기를 표시하는 컴포넌트 */}
       <SizeDisplay>{sizeText}</SizeDisplay>
     </Zone>
   );

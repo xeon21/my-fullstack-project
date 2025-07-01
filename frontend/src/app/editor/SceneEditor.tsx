@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { useEditorStore, Scene as SceneType, Region as RegionType, Content } from '@/store/editorStore';
+import { useEditorStore, Scene as SceneType, Region as RegionType, Content, SceneSize } from '@/store/editorStore';
 import { v4 as uuidv4 } from 'uuid';
 import { Region } from './Region';
 
@@ -50,6 +50,13 @@ const StyledInput = styled.input`
   font-size: 0.8rem;
 `;
 
+const StyledSelect = styled.select`
+  padding: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.8rem;
+`;
+
 const StyledButton = styled.button<{ $secondary?: boolean }>`
   padding: 0.3rem 0.6rem;
   background-color: ${props => props.$secondary ? '#95a5a6' : '#3498db'};
@@ -65,12 +72,14 @@ const StyledButton = styled.button<{ $secondary?: boolean }>`
   }
 `;
 
-const CanvasWrapper = styled.div`
+// [수정] sizePreset prop을 $sizePreset으로 변경
+const CanvasWrapper = styled.div<{ $sizePreset: SceneSize }>`
   width: 100%;
   max-width: 1200px;
   margin: 1rem auto 0 auto;
   border: 1px solid #d1d5db;
-  aspect-ratio: 8 / 1;
+  /* [수정] props.sizePreset을 props.$sizePreset으로 변경 */
+  aspect-ratio: ${props => props.$sizePreset === '1920x160' ? '12 / 1' : '1920 / 540'};
   display: flex;
 `;
 
@@ -92,8 +101,14 @@ interface SceneEditorProps {
 }
 
 export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
-  // [수정] updateRegionContent를 스토어에서 가져옵니다.
-  const { updateRegionSize, setRegions, updateSceneTransitionTime, resetScene, updateRegionContent } = useEditorStore();
+  const { 
+      updateRegionSize, 
+      setRegions, 
+      updateSceneTransitionTime, 
+      resetScene, 
+      updateRegionContent,
+      updateSceneSizePreset
+  } = useEditorStore();
   
   const [regionCount, setRegionCount] = useState(scene.regions.length);
   const [transitionTime, setTransitionTime] = useState(scene.transitionTime);
@@ -140,11 +155,10 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-        const newContent: Content = {
+        updateRegionContent(scene.id, regionId, {
             type: contentType,
             src: e.target?.result as string,
-        };
-        updateRegionContent(scene.id, regionId, newContent);
+        });
     };
 
     if (contentType === 'webpage') {
@@ -159,6 +173,16 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
       <ControlBar>
         <SceneHeader>{scene.name}</SceneHeader>
         <div style={{flexGrow: 1}} />
+        <ControlGroup>
+          <label>캔버스 크기:</label>
+          <StyledSelect 
+            value={scene.sizePreset}
+            onChange={(e) => updateSceneSizePreset(scene.id, e.target.value as SceneSize)}
+          >
+              <option value="1920x160">1920 x 160</option>
+              <option value="1920x540">1920 x 540</option>
+          </StyledSelect>
+        </ControlGroup>
         <ControlGroup>
           <label>영역 개수:</label>
           <StyledInput
@@ -180,7 +204,8 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
         </ControlGroup>
         <StyledButton $secondary onClick={handleResetScene}>씬 초기화</StyledButton>
       </ControlBar>
-      <CanvasWrapper>
+      {/* [수정] CanvasWrapper에 전달하는 prop을 $sizePreset으로 변경 */}
+      <CanvasWrapper $sizePreset={scene.sizePreset}>
         <PanelGroup
           direction="horizontal"
           onLayout={(sizes) => updateRegionSize(scene.id, sizes)}
@@ -192,6 +217,7 @@ export const SceneEditor = ({ scene, onZoneClick }: SceneEditorProps) => {
                 <Region 
                   sceneId={scene.id}
                   region={region} 
+                  canvasHeight={scene.sizePreset === '1920x160' ? 160 : 540}
                   onZoneClick={() => onZoneClick(scene.id, region.id)}
                   onFileDrop={(file) => handleFileDrop(region.id, file)}
                 />

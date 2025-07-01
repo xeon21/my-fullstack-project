@@ -53,7 +53,7 @@ const ControlButton = styled.button<{ $primary?: boolean; $secondary?: boolean; 
     props.$primary ? '#e67e22' : 
     props.$danger ? '#c0392b' :
     props.$secondary ? '#3498db' : 
-    '#7f8c8d'}; /* 기본색상 수정 */
+    '#7f8c8d'};
   color: white;
   border: none;
   border-radius: 4px;
@@ -103,42 +103,48 @@ const HiddenFileInput = styled.input`
 
 export default function EdgeEditorPage() {
     const { scenes, addScene, updateRegionContent, reset, loadState } = useEditorStore();
+    const { accessToken } = useAuthStore();
     
     const searchParams = useSearchParams();
     const router = useRouter();
     const projectIdFromUrl = searchParams.get('id');
 
-  const [projectName, setProjectName] = useState('새 프로젝트');
+  const [projectName, setProjectName] = useState('');
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
   const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
   const [isContentTypeModalOpen, setIsContentTypeModalOpen] = useState(false);
   const [uploadInfo, setUploadInfo] = useState<{ sceneId: string, regionId: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const loadProjectInputRef = useRef<HTMLInputElement>(null);
+  const projectNameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const projectId = projectIdFromUrl ? parseInt(projectIdFromUrl, 10) : null;
-    if (projectId && projectId !== currentProjectId) {
-      const fetchProject = async () => {
+
+    const fetchProject = async (id: number) => {
         try {
-          const response = await axiosInstance.get(`/projects/${projectId}`);
+          const response = await axiosInstance.get(`/projects/${id}`);
           const { name, data } = response.data;
           setProjectName(name);
           loadState(data);
-          setCurrentProjectId(projectId);
+          setCurrentProjectId(id);
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status !== 401) {
                 alert("프로젝트를 불러올 수 없습니다.");
             }
             router.push('/editor/new');
         }
-      };
-      fetchProject();
+    };
+
+    if (projectId && projectId !== currentProjectId) {
+      fetchProject(projectId);
     } else if (!projectId) {
         reset();
-        setProjectName('새 프로젝트');
+        setProjectName('');
         setCurrentProjectId(null);
+        projectNameInputRef.current?.focus();
     }
-  }, [projectIdFromUrl, loadState, reset, router, currentProjectId]);
+  }, [projectIdFromUrl, currentProjectId, loadState, reset, router]);
 
 
   const handleZoneClick = (sceneId: string, regionId: string) => {
@@ -192,13 +198,14 @@ export default function EdgeEditorPage() {
     }
   };
 
-  // [복원] 저장 기능 핸들러
   const handleSave = async () => {
     if (!projectName.trim()) {
-        alert('프로젝트 이름을 입력해주세요.');
+        alert('컨텐츠 명을 입력해 주세요.');
+        projectNameInputRef.current?.focus();
         return;
     }
     const stateToSave: SavedState = { scenes };
+
     try {
       if (currentProjectId) {
         await axiosInstance.put(`/projects/${currentProjectId}`, {
@@ -220,13 +227,138 @@ export default function EdgeEditorPage() {
     }
   };
 
-  // [복원] 불러오기 기능 핸들러
   const handleLoadProject = (projectId: number) => {
     router.push(`/editor/new?id=${projectId}`);
     setIsLoadModalOpen(false);
   };
   
-  const handleExport = () => { /* 이전과 동일 */ };
+  const handleExport = () => {
+    const sceneData = scenes.map(scene => ({
+        id: scene.id,
+        html: `
+        <div id="scene-${scene.id}" class="scene-container" style="display: none;">
+          ${scene.regions.map(region => {
+            let contentHtml = '';
+            if (region.content) {
+              switch (region.content.type) {
+                case 'image':
+                  contentHtml = `<img src="${region.content.src}" alt="">`;
+                  break;
+                case 'video':
+                  contentHtml = `<video src="${region.content.src}" autoplay muted loop playsinline></video>`;
+                  break;
+                case 'webpage':
+                  const escapedSrc = region.content.src.replace(/"/g, '&quot;');
+                  contentHtml = `<iframe srcdoc="${escapedSrc}"></iframe>`;
+                  break;
+              }
+            }
+            return `<div class="region" style="flex-basis: ${region.size}%;">${contentHtml}</div>`;
+          }).join('')}
+        </div>
+      `,
+      transitionTime: scene.transitionTime * 1000,
+      sizePreset: scene.sizePreset
+    }));
+
+    const escapedSceneData = JSON.stringify(sceneData).replace(/<\/script>/g, '<\\/script>');
+
+    const script = `
+      <script>
+        const scenes = ${escapedSceneData};
+        let currentSceneIndex = 0;
+        const displayWrapper = document.querySelector('.display-wrapper');
+
+        function showScene(index) {
+          if (!scenes[index]) return;
+          
+          const currentScene = scenes[index];
+          if (displayWrapper) {
+            displayWrapper.style.aspectRatio = currentScene.sizePreset === '1920x160' ? '12 / 1' : '1920 / 540';
+          }
+
+          scenes.forEach((scene, i) => {
+            const el = document.getElementById('scene-' + scene.id);
+            if(el) el.style.display = i === index ? 'flex' : 'none';
+          });
+
+          if (scenes.length > 1) {
+            const nextDelay = currentScene.transitionTime;
+            if (nextDelay > 0) {
+                setTimeout(nextScene, nextDelay);
+            }
+          }
+        }
+
+        function nextScene() {
+          currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
+          showScene(currentSceneIndex);
+        }
+
+        if (scenes.length > 0) {
+          showScene(0);
+        }
+      <\/script>
+    `;
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>${projectName}</title>
+  <style>
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #2c3e50; display: flex; justify-content: center; align-items: center;}
+    .display-wrapper { 
+        width: 98vw; /* [수정] 너비를 브라우저 창 기준(vw)으로 설정 */
+        max-width: 1600px; /* 최대 너비 제한 */
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        /* aspect-ratio는 JS가 동적으로 제어합니다. */
+    }
+    .scene-container { display: flex; width: 100%; height: 100%; }
+    .region { height: 100%; box-sizing: border-box; overflow: hidden; background-color: #eee; }
+    .region img, .region video, .region iframe { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        border: none; 
+        display: block;
+        margin: 0px;
+        padding: 0px;
+    }
+  </style>
+</head>
+<body>
+  <div class="display-wrapper">
+    ${sceneData.map(s => s.html).join('')}
+  </div>
+  ${script}
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${projectName}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // [추가] 새 프로젝트 버튼을 위한 핸들러 함수
+  const handleNewProject = () => {
+    // 1. URL에 projectId가 있다면, 먼저 상태부터 초기화합니다.
+    if (projectIdFromUrl) {
+        reset();
+        setProjectName('');
+        setCurrentProjectId(null);
+    }
+    // 2. /editor/new 경로로 이동하여 useEffect를 다시 트리거하거나,
+    //    이미 해당 경로에 있다면 상태 초기화만으로도 충분합니다.
+    router.push('/editor/new');
+    // 3. 이름 입력칸에 포커스를 줍니다.
+    setTimeout(() => projectNameInputRef.current?.focus(), 0);
+  };
   
   return (
       <>
@@ -245,18 +377,18 @@ export default function EdgeEditorPage() {
         <PageWrapper>
             <Header>
               <ProjectNameInput
+                ref={projectNameInputRef}
                 type="text"
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
-                placeholder="프로젝트 이름"
+                placeholder="컨텐츠 명을 입력해 주세요"
               />
               <ControlsWrapper>
-                {/* [복원] DB 저장/수정하기 버튼 */}
                 <ControlButton onClick={handleSave}>
                     {currentProjectId ? '수정하기' : 'DB에 저장'}
                 </ControlButton>
                 <ControlButton $secondary onClick={() => setIsLoadModalOpen(true)}>불러오기</ControlButton>
-                <ControlButton $danger onClick={() => router.push('/editor/new')}>새 프로젝트</ControlButton>
+                <ControlButton $danger onClick={handleNewProject}>새 프로젝트</ControlButton>
                 <ControlButton $primary onClick={handleExport}>HTML로 내보내기</ControlButton>
               </ControlsWrapper>
             </Header>
@@ -274,6 +406,12 @@ export default function EdgeEditorPage() {
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
+        />
+        <HiddenFileInput
+            type="file"
+            ref={loadProjectInputRef}
+            accept=".json"
+            // 파일로 프로젝트 불러오기 기능은 DB 연동으로 대체되었습니다.
         />
       </>
   );

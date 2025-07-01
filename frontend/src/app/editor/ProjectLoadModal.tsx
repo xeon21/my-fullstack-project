@@ -59,15 +59,13 @@ const SearchButton = styled.button`
   &:hover { background: #117a65; }
 `;
 
-// [수정] 테이블 래퍼의 높이를 auto로 변경
 const TableWrapper = styled.div`
-  overflow-y: visible; /* 스크롤바 제거 */
+  overflow-y: visible;
   position: relative;
   border-top: 1px solid #dee2e6;
   border-bottom: 1px solid #dee2e6;
   margin-bottom: 1rem;
 `;
-
 
 const ProjectTable = styled.table`
   width: 100%; border-collapse: collapse;
@@ -75,11 +73,11 @@ const ProjectTable = styled.table`
 
 const Th = styled.th<{ width?: string }>`
   background-color: #f8f9fa; 
-  padding: 0.7rem 1rem; /* 헤더는 현재 크기 유지 */
+  padding: 0.7rem 1rem;
   text-align: left;
-  font-size: 0.9rem; /* 헤더 폰트 크기 유지 */
+  font-size: 0.9rem;
   color: #333; 
-  border-bottom: 2px solid #dee2e6; /* 헤더 구분선 강화 */
+  border-bottom: 2px solid #dee2e6;
   position: sticky; 
   top: 0;
   width: ${props => props.width || 'auto'};
@@ -92,18 +90,20 @@ const Tr = styled.tr`
 `;
 
 const Td = styled.td`
-  /* [수정] 패딩과 폰트 크기를 약 70%로 축소 */
   padding: 0.5rem 1rem; 
   border-bottom: 1px solid #e9ecef; 
   font-size: 0.85rem; 
   vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
 `;
 
 const ActionButton = styled.button`
   background: #3498db; 
   color: white; 
   border: none; 
-  /* [수정] 패딩과 폰트 크기를 약 70%로 축소 */
   padding: 0.35rem 0.7rem;
   border-radius: 4px; 
   cursor: pointer; 
@@ -124,7 +124,6 @@ const CloseButton = styled.button`
 `;
 
 const ThumbnailWrapper = styled.div`
-    /* [수정] 썸네일 크기 축소 */
     width: 70px; 
     height: 39.37px;
     border-radius: 4px;
@@ -133,7 +132,7 @@ const ThumbnailWrapper = styled.div`
     justify-content: center;
     align-items: center;
     background-color: #f0f0f0;
-    font-size: 1.2rem; /* 아이콘 크기 축소 */
+    font-size: 1.2rem;
     color: #999;
     cursor: default;
 
@@ -145,14 +144,13 @@ const ThumbnailWrapper = styled.div`
     }
 `;
 
-// [수정] 미리보기 팝업 크기 및 위치 조정
 const PreviewPopup = styled.div`
   position: fixed;
   top: 30%;
-  left: 25%; /* 정중앙(50%)에서 왼쪽으로 절반 이동 */
-  transform: translateX(-50%); /* 자신의 너비의 50%만큼 왼쪽으로 이동하여 중앙 정렬 */
-  width: 240px; /* 480px -> 240px */
-  height: 135px; /* 270px -> 135px */
+  left: 25%;
+  transform: translateX(-50%);
+  width: 240px;
+  height: 135px;
   border: 1px solid #ccc;
   background: #fff;
   box-shadow: 0 6px 20px rgba(0,0,0,0.25);
@@ -177,7 +175,6 @@ const PreviewPopup = styled.div`
   }
 `;
 
-// [추가] 페이지네이션 컨테이너 스타일
 const PaginationWrapper = styled.div`
     display: flex;
     justify-content: center;
@@ -186,11 +183,12 @@ const PaginationWrapper = styled.div`
     margin-top: 1rem;
 `;
 
-const PageButton = styled.button<{ active?: boolean }>`
+// [수정] active prop을 $active로 변경
+const PageButton = styled.button<{ $active?: boolean }>`
     padding: 0.5rem 0.8rem;
-    border: 1px solid ${props => props.active ? '#3498db' : '#ccc'};
-    background-color: ${props => props.active ? '#3498db' : 'white'};
-    color: ${props => props.active ? 'white' : '#333'};
+    border: 1px solid ${props => props.$active ? '#3498db' : '#ccc'};
+    background-color: ${props => props.$active ? '#3498db' : 'white'};
+    color: ${props => props.$active ? 'white' : '#333'};
     border-radius: 4px;
     cursor: pointer;
     &:disabled {
@@ -227,13 +225,12 @@ export const ProjectLoadModal = ({ onClose, onLoad }: ProjectLoadModalProps) => 
   const [authorSearch, setAuthorSearch] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-
-   // [추가] 페이지네이션 상태
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const limit = 10; // 한 페이지에 10개씩 표시
+  const limit = 10;
 
- const fetchProjects = useCallback(async () => {
+  const fetchProjects = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -245,7 +242,7 @@ export const ProjectLoadModal = ({ onClose, onLoad }: ProjectLoadModalProps) => 
       
       const response = await axios.get(`http://localhost:3002/projects`, { params });
       setProjects(response.data.data);
-      setTotalPages(response.data.lastPage); // 전체 페이지 수 설정
+      setTotalPages(response.data.lastPage);
     } catch (error) {
       console.error("프로젝트 목록 로딩 실패:", error);
     } finally {
@@ -310,8 +307,8 @@ export const ProjectLoadModal = ({ onClose, onLoad }: ProjectLoadModalProps) => 
               ) : (
                 projects.map((project) => (
                   <tr key={project.id} onMouseEnter={() => handleMouseEnter(project.thumbnail)}>
-                    <Td>{project.name}</Td>
-                    <Td>{project.author || 'N/A'}</Td>
+                    <Td title={project.name}>{project.name}</Td>
+                    <Td title={project.author || 'N/A'}>{project.author || 'N/A'}</Td>
                     <Td>
                       <ThumbnailWrapper>
                         {project.thumbnail?.startsWith('data:image') ? 
@@ -333,13 +330,13 @@ export const ProjectLoadModal = ({ onClose, onLoad }: ProjectLoadModalProps) => 
             </tbody>
           </ProjectTable>
         </TableWrapper>
-         {/* [추가] 페이지네이션 UI */}
+        
         <PaginationWrapper>
             <PageButton onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
                 이전
             </PageButton>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <PageButton key={page} active={page === currentPage} onClick={() => handlePageChange(page)}>
+                <PageButton key={page} $active={page === currentPage} onClick={() => handlePageChange(page)}>
                     {page}
                 </PageButton>
             ))}
@@ -347,6 +344,7 @@ export const ProjectLoadModal = ({ onClose, onLoad }: ProjectLoadModalProps) => 
                 다음
             </PageButton>
         </PaginationWrapper>
+
         <CloseButton onClick={onClose}>닫기</CloseButton>
       </ModalContent>
       

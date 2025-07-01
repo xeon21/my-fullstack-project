@@ -15,11 +15,15 @@ export interface Region {
   content: Content | null;
 }
 
+// [추가] 씬 크기 타입을 정의합니다.
+export type SceneSize = '1920x160' | '1920x540';
+
 export interface Scene {
   id: string;
   name: string;
   regions: Region[];
   transitionTime: number;
+  sizePreset: SceneSize; // [추가] 씬 크기 프리셋
 }
 
 const createNewScene = (name: string): Scene => ({
@@ -27,6 +31,7 @@ const createNewScene = (name: string): Scene => ({
   name,
   regions: [{ id: uuidv4(), size: 100, content: null }],
   transitionTime: 5,
+  sizePreset: '1920x160', // [추가] 새 씬의 기본 크기
 });
 
 const createNewRegion = (): Region => ({
@@ -35,7 +40,6 @@ const createNewRegion = (): Region => ({
     content: null,
 });
 
-// [추가] 저장되는 파일의 전체 상태 타입 정의
 export interface SavedState {
     scenes: Scene[];
 }
@@ -54,7 +58,8 @@ interface EditorState {
   reset: () => void;
   resetScene: (sceneId: string) => void;
   updateSceneTransitionTime: (sceneId: string, time: number) => void;
-  loadState: (savedState: SavedState) => void; // [추가] 불러오기 액션
+  updateSceneSizePreset: (sceneId: string, size: SceneSize) => void; // [추가] 씬 크기 변경 액션
+  loadState: (savedState: SavedState) => void;
 }
 
 const initialScene = createNewScene('기본 씬');
@@ -128,6 +133,14 @@ export const useEditorStore = create<EditorState>((set) => ({
       ),
     })),
 
+  // [추가] 씬 크기 프리셋을 변경하는 액션
+  updateSceneSizePreset: (sceneId, size) =>
+    set((state) => ({
+        scenes: state.scenes.map((scene) =>
+            scene.id === sceneId ? { ...scene, sizePreset: size } : scene
+        ),
+    })),
+
   resetScene: (sceneId) =>
     set((state) => ({
         scenes: state.scenes.map((scene) =>
@@ -138,10 +151,9 @@ export const useEditorStore = create<EditorState>((set) => ({
         selectedRegionId: null,
     })),
     
-  // [추가] 불러온 데이터로 상태를 덮어쓰는 액션
   loadState: (savedState) => set({
     scenes: savedState.scenes,
-    activeSceneId: savedState.scenes[0]?.id || null, // 첫 번째 씬을 활성화
+    activeSceneId: savedState.scenes[0]?.id || null,
     selectedRegionId: null,
   }),
 
