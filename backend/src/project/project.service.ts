@@ -7,12 +7,12 @@ import { CreateProjectDto, UpdateProjectDto } from '../dto/project.dto';
 export class ProjectService {
   constructor(private readonly projectRepository: ProjectRepository) {}
 
-  create(createProjectDto: CreateProjectDto) {
-    return this.projectRepository.create(createProjectDto);
+  create(createProjectDto: CreateProjectDto, userId: number) {
+    return this.projectRepository.create(createProjectDto, userId);
   }
 
-  findAll() {
-    return this.projectRepository.findAll();
+ findAll(filters: { author?: string; startDate?: string; endDate?: string }, pagination: { page: number; limit: number }) {
+    return this.projectRepository.findAll(filters, pagination);
   }
 
   findOne(id: number) {

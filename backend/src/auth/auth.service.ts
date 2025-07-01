@@ -14,16 +14,26 @@ export class AuthService {
   // [수정] DB에서 사용자를 찾아 비밀번호를 비교합니다.
   async validateUser(username: string, pass: string): Promise<any> {
     const user = await this.authRepository.findUserByUsername(username);
-    // 실제 애플리케이션에서는 bcrypt.compare(pass, user.password) 와 같이 해시 비교를 해야 합니다.
+
+     console.log(user);
+    // 사용자가 존재하고, 비밀번호가 일치하는지 확인 (평문 비교)
     if (user && user.password === pass) {
-      const { password, ...result } = user; // 비밀번호를 제외한 나머지 정보만 반환
-      return result;
+      // DB에서 사용자의 권한을 가져옵니다.
+      const permissions = await this.authRepository.getUserPermissions(user.userId);
+
+      const { password, ...result } = user; // 비밀번호는 제외
+      return {
+        ...result,
+        permissions, // 권한 정보를 결과에 추가
+      };
     }
     return null;
   }
 
   async login(user: any) {
+    
     const validatedUser = await this.validateUser(user.username, user.password);
+    
     if (!validatedUser) {
       throw new UnauthorizedException('로그인 정보가 올바르지 않습니다.');
     }

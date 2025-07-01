@@ -82,7 +82,7 @@ export default function LoginPage() {
   return (
     <LoginPageContainer>
       <LoginForm onSubmit={handleSubmit}>
-        <Title>My CMS</Title>
+        <Title>Cilinus AIDS</Title>
         <Input
           type="text"
           placeholder="Username"

@@ -8,24 +8,33 @@ export class AuthRepository { // 클래스 이름 변경
 
   // 로그인 시 사용자 정보를 찾는 메소드
   async findUserByUsername(username: string): Promise<any> {
-    // 실제로는 users 테이블에서 사용자를 찾아야 합니다.
-    // 여기서는 예시로 하드코딩된 값을 반환합니다.
-    if (username === 'test') {
-      return { 
-        userId: 1, 
-        username: 'test', 
-        password: '1234', // 실제로는 해시된 비밀번호여야 합니다.
-        permissions: ['menu_admin_view', 'menu_dashboard_view'] 
-      };
-    }else if (username === 'admin') {
-      return { 
-        userId: 2, 
-        username: 'admin', 
-        password: 'admin123', // 실제로는 해시된 비밀번호여야 합니다.
-        permissions: ['menu_admin_view', 'menu_dashboard_view','menu_user_management'] 
-      };
-      
+    const query = 'SELECT UserIdx,UserName, UserID, UserPass FROM user_info WHERE UserID = ?';
+    const rows = await this.db.executeQuery<any[]>(query, [username]);
+
+    if (!rows || rows.length === 0) {
+      return null;
     }
-    return null;
+
+    const user = rows[0];
+    return {
+        userId: user.UserIdx,
+        username: user.UserName,
+        password: user.UserPass, // 평문 비밀번호
+    };
+  }
+
+  async getUserPermissions(userId: number): Promise<string[]> {
+    const query = `
+      SELECT DISTINCT p.name
+      FROM user_roles ur
+      JOIN role_permissions rp ON ur.roleId = rp.roleId
+      JOIN permissions p ON rp.permissionId = p.id
+      WHERE ur.userId = ?
+    `;
+    const rows = await this.db.executeQuery<any[]>(query, [userId]);
+    if (!rows || rows.length === 0) {
+      return [];
+    }
+    return rows.map(row => row.name);
   }
 }

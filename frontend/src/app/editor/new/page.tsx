@@ -4,8 +4,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { useSearchParams, useRouter } from 'next/navigation';
-import axios from 'axios';
+import axios from 'axios'; // [수정] isAxiosError를 위해 기본 axios도 임포트합니다.
+import axiosInstance from '@/lib/axios';
 import { useEditorStore, Content, SavedState } from '@/store/editorStore';
+import { useAuthStore } from '@/store/authStore';
 import { ContentTypeModal } from '../ContentTypeModal';
 import { SceneEditor } from '../SceneEditor';
 import { ProjectLoadModal } from '../ProjectLoadModal';
@@ -45,14 +47,12 @@ const ControlsWrapper = styled.div`
   align-items: center;
 `;
 
-// [수정] 모든 커스텀 prop에 '$' 접두사 추가
-const ControlButton = styled.button<{ $primary?: boolean; $secondary?: boolean; $danger?: boolean; $fileformat?: boolean }>`
+const ControlButton = styled.button<{ $primary?: boolean; $secondary?: boolean; $danger?: boolean; }>`
   padding: 0.4rem 0.8rem;
   background-color: ${props => 
     props.$primary ? '#e67e22' : 
     props.$danger ? '#c0392b' :
     props.$secondary ? '#3498db' : 
-    props.$fileformat ? '#2ecc71' :
     '#95a5a6'};
   color: white;
   border: none;
@@ -102,13 +102,7 @@ const HiddenFileInput = styled.input`
 `;
 
 export default function EdgeEditorPage() {
-    const { 
-        scenes, 
-        addScene, 
-        updateRegionContent,
-        reset,
-        loadState
-    } = useEditorStore();
+    const { scenes, addScene, updateRegionContent, reset, loadState } = useEditorStore();
     
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -127,14 +121,15 @@ export default function EdgeEditorPage() {
     if (projectId && projectId !== currentProjectId) {
       const fetchProject = async () => {
         try {
-          const response = await axios.get(`http://localhost:3002/projects/${projectId}`);
+          const response = await axiosInstance.get(`/projects/${projectId}`);
           const { name, data } = response.data;
           setProjectName(name);
           loadState(data);
           setCurrentProjectId(projectId);
         } catch (error) {
-            console.error("URL을 통해 프로젝트를 불러오는데 실패했습니다.", error);
-            alert("프로젝트를 불러올 수 없습니다.");
+            if (axios.isAxiosError(error) && error.response?.status !== 401) {
+                alert("프로젝트를 불러올 수 없습니다.");
+            }
             router.push('/editor/new');
         }
       };
@@ -206,50 +201,30 @@ export default function EdgeEditorPage() {
     const stateToSave: SavedState = { scenes };
     try {
       if (currentProjectId) {
-        await axios.put(`http://localhost:3002/projects/${currentProjectId}`, {
+        await axiosInstance.put(`/projects/${currentProjectId}`, {
           name: projectName, data: stateToSave,
         });
         alert('프로젝트가 성공적으로 업데이트되었습니다.');
       } else {
-        const response = await axios.post('http://localhost:3002/projects', {
+        const response = await axiosInstance.post('/projects', {
           name: projectName, data: stateToSave,
         });
         alert('새 프로젝트가 저장되었습니다.');
         router.push(`/editor/new?id=${response.data.id}`);
       }
     } catch (error) {
-        console.error("프로젝트 저장/업데이트 실패:", error);
-        alert("프로젝트 저장에 실패했습니다.");
+        if (axios.isAxiosError(error) && error.response?.status !== 401) {
+            console.error("프로젝트 저장/업데이트 실패:", error);
+            alert("프로젝트 저장에 실패했습니다.");
+        }
     }
   };
 
-  const handleLoadProject = async (projectId: number) => {
+  const handleLoadProject = (projectId: number) => {
     router.push(`/editor/new?id=${projectId}`);
     setIsLoadModalOpen(false);
   };
   
-  const handleLoadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const savedState = JSON.parse(e.target?.result as string);
-                if (savedState && Array.isArray(savedState.scenes)) {
-                    loadState(savedState);
-                } else {
-                    alert('올바른 형식의 에디터 파일이 아닙니다.');
-                }
-            } catch (error) {
-                alert('파일을 읽는 도중 오류가 발생했습니다.');
-                console.error("파일 파싱 오류:", error);
-            }
-        };
-        reader.readAsText(file);
-    }
-    if (event.target) event.target.value = '';
-  };
-
   const handleExport = () => { /* 이전과 동일 */ };
   
   return (
@@ -275,8 +250,8 @@ export default function EdgeEditorPage() {
                 placeholder="프로젝트 이름"
               />
               <ControlsWrapper>
-                <ControlButton $fileformat onClick={handleSave}>DB에 저장</ControlButton>
-                <ControlButton $fileformat onClick={() => setIsLoadModalOpen(true)}>불러오기</ControlButton>
+                <ControlButton onClick={handleSave}>DB에 저장</ControlButton>
+                <ControlButton onClick={() => setIsLoadModalOpen(true)}>불러오기</ControlButton>
                 <ControlButton $danger onClick={() => router.push('/editor/new')}>새 프로젝트</ControlButton>
                 <ControlButton $primary onClick={handleExport}>HTML로 내보내기</ControlButton>
               </ControlsWrapper>
@@ -296,12 +271,7 @@ export default function EdgeEditorPage() {
           ref={fileInputRef}
           onChange={handleFileChange}
         />
-        <HiddenFileInput
-            type="file"
-            ref={loadProjectInputRef}
-            accept=".json"
-            onChange={handleLoadFile}
-        />
+        {/* 파일로 불러오기 기능은 이제 DB 연동으로 대체되었습니다. */}
       </>
   );
 }
