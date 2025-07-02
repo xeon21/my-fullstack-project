@@ -1,5 +1,6 @@
 // frontend/src/store/editorStore.ts
 'use client';
+import { arrayMove } from '@dnd-kit/sortable'; // dnd-kit의 유틸리티 함수 import
 
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
@@ -73,6 +74,7 @@ interface EditorState {
 
   // --- [추가] ---
   moveRegion: (sceneId: string, fromIndex: number, toIndex: number) => void;
+  moveScene: (fromIndex: number, toIndex: number) => void;
 }
 
 const initialScene = createNewScene('기본 씬');
@@ -177,6 +179,11 @@ export const useEditorStore = create<EditorState>((set) => ({
             scenes: state.scenes.map(s => s.id === sceneId ? { ...s, regions: newRegions } : s)
         };
     }),
+    // --- [추가] 씬 순서 변경 액션 구현 ---
+  moveScene: (fromIndex, toIndex) =>
+    set((state) => ({
+        scenes: arrayMove(state.scenes, fromIndex, toIndex),
+    })),
 
   loadState: (savedState) => set({
     scenes: savedState.scenes,

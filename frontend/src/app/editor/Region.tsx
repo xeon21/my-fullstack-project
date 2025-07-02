@@ -36,7 +36,6 @@ const Zone = styled.div<{
   transition: all 0.2s;
   cursor: ${props => props.$isDragOverlay ? 'grabbing' : 'pointer'};
   
-  // 드래그 복제본(Overlay)에 적용될 스타일
   ${props => props.$isDragOverlay && css`
     opacity: 0.95;
     transform: scale(1.05);
@@ -79,7 +78,6 @@ const Zone = styled.div<{
     background-color: #f0f8ff;
   }
 
-  // 드래그 중인 '원본' 아이템의 스타일
   ${props => props.$isDragging && css`
     border-color: #e0e0e0;
     background-color: #f5f5f5;
@@ -237,7 +235,6 @@ export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop,
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        {...attributes}
     >
         <Zone
             $isSelected={isSelected}
@@ -245,6 +242,7 @@ export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop,
             $isDragging={isDragging}
             $isDropTarget={isOver && !isDragging}
             $isDragOverlay={isDragOverlay}
+            {...attributes}
         >
             {!isDragOverlay && <div className="drag-handle" {...listeners}>⠿</div>}
             

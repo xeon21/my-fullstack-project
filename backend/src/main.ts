@@ -26,6 +26,7 @@ async function bootstrap() {
     .addTag('UserInfo')
     .addTag('Game')
     .addTag('Project') 
+    .addTag('Canvas Resolutions') // [추가]
     // .addBearerAuth() // JWT 인증 등을 사용하는 경우 추가 (선택 사항)
     .build();
 

@@ -1,7 +1,7 @@
 // frontend/src/app/editor/new/page.tsx
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect,useCallback } from 'react';
 import styled from 'styled-components';
 import { useSearchParams, useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -12,6 +12,22 @@ import { ContentTypeModal } from '../ContentTypeModal';
 import { SceneEditor } from '../SceneEditor';
 import { ProjectLoadModal } from '../ProjectLoadModal';
 import { ConfirmOverwriteModal } from '../ConfirmOverwriteModal';
+// --- [추가/수정] ---
+import { SortableSceneItem } from '../SortableSceneItem';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy, // 수직 정렬 전략 사용
+} from '@dnd-kit/sortable';
 
 const PageWrapper = styled.div`
   padding: 1rem;
@@ -103,7 +119,8 @@ const HiddenFileInput = styled.input`
 `;
 
 export default function EdgeEditorPage() {
-    const { scenes, addScene, updateRegionContent, reset, loadState, overwriteConfirm, clearOverwriteConfirm } = useEditorStore();
+    const { scenes, addScene, updateRegionContent, reset, loadState, overwriteConfirm, clearOverwriteConfirm, moveScene } = useEditorStore();
+
     const { accessToken } = useAuthStore();
 
     const searchParams = useSearchParams();
@@ -118,6 +135,24 @@ export default function EdgeEditorPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const loadProjectInputRef = useRef<HTMLInputElement>(null);
     const projectNameInputRef = useRef<HTMLInputElement>(null);
+
+    // --- [추가] 씬 순서 변경을 위한 센서와 핸들러 함수 ---
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor)
+    );
+
+    const handleSceneDragEnd = useCallback((event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = scenes.findIndex((s) => s.id === active.id);
+            const newIndex = scenes.findIndex((s) => s.id === over.id);
+            if (oldIndex !== -1 && newIndex !== -1) {
+                moveScene(oldIndex, newIndex);
+            }
+        }
+    }, [scenes, moveScene]);
+    // --- 추가 끝 ---
 
     useEffect(() => {
         const projectId = projectIdFromUrl ? parseInt(projectIdFromUrl, 10) : null;
@@ -389,15 +424,22 @@ export default function EdgeEditorPage() {
                 </Header>
                 <EditorLayout>
                     <MainColumn>
-                        {scenes.map(scene => (
-                            <SceneEditor
-                                key={scene.id}
-                                scene={scene}
-                                onZoneClick={handleZoneClick}
-                                // [수정] SceneEditor로 onFileDrop 함수를 전달합니다.
-                                onFileDrop={handleFileDrop}
-                            />
-                        ))}
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleSceneDragEnd}
+                        >
+                            <SortableContext items={scenes.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                                {scenes.map(scene => (
+                                    <SortableSceneItem
+                                        key={scene.id}
+                                        scene={scene}
+                                        onZoneClick={handleZoneClick}
+                                        onFileDrop={handleFileDrop}
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
                         <AddSceneButton onClick={handleAddScene}>+ 새 씬 추가</AddSceneButton>
                     </MainColumn>
                 </EditorLayout>

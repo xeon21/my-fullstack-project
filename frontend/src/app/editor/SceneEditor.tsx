@@ -1,7 +1,8 @@
 // frontend/src/app/editor/SceneEditor.tsx
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+// [수정] useCallback을 import 합니다.
+import React, { useState, useEffect, useCallback, CSSProperties } from 'react';
 import styled from 'styled-components';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
@@ -135,6 +136,7 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
     })
   );
 
+  // --- [핵심 수정] 모든 핸들러 함수를 useCallback으로 감싸서 불필요한 재생성을 방지합니다. ---
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
     const region = scene.regions.find(r => r.id === active.id);
@@ -157,12 +159,7 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
     setActiveRegion(null);
   }, [scene.id, scene.regions, moveRegion]);
 
-  useEffect(() => {
-    setRegionCount(scene.regions.length);
-    setTransitionTime(scene.transitionTime);
-  }, [scene]);
-
-  const handleApplyRegions = () => {
+  const handleApplyRegions = useCallback(() => {
     if (regionCount > 0 && regionCount <= 10) {
       const newSize = 100 / regionCount;
       const newRegions: RegionType[] = Array.from({ length: regionCount }, () => ({
@@ -174,19 +171,24 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
     } else {
       alert('영역 개수는 1에서 10 사이로 지정해주세요.');
     }
-  };
+  }, [regionCount, scene.id, setRegions]);
   
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTimeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
       const time = Number(e.target.value);
       setTransitionTime(time);
       updateSceneTransitionTime(scene.id, time);
-  };
+  }, [scene.id, updateSceneTransitionTime]);
 
-  const handleResetScene = () => {
+  const handleResetScene = useCallback(() => {
     if (confirm(`'${scene.name}' 씬을 초기화하시겠습니까?`)) {
         resetScene(scene.id);
     }
-  }
+  }, [scene.id, scene.name, resetScene]);
+
+  useEffect(() => {
+    setRegionCount(scene.regions.length);
+    setTransitionTime(scene.transitionTime);
+  }, [scene]);
 
   return (
     <SceneWrapper>

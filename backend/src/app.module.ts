@@ -5,6 +5,7 @@ import { LoginModule } from './login/login.modules';
 import { UserInfoModule } from './userinfo/userinfo.modules';
 import { AuthModule } from './auth/auth.modules';
 import { ProjectModule } from './project/project.module';
+import { CanvasResolutionModule } from './canvas-resolution/canvas-resolution.module'; // [추가]
 
 @Module({
 
@@ -26,6 +27,7 @@ import { ProjectModule } from './project/project.module';
     UserInfoModule,
     AuthModule,
     ProjectModule,
+    CanvasResolutionModule,
   ],
    
 })
