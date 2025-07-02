@@ -72,12 +72,13 @@ const StyledButton = styled.button<{ $secondary?: boolean }>`
   }
 `;
 
+// [수정] aspect-ratio를 '1920 / 158'로 변경합니다.
 const CanvasWrapper = styled.div<{ $sizePreset: SceneSize }>`
   width: 100%;
   max-width: 1200px;
   margin: 1rem auto 0 auto;
   border: 1px solid #d1d5db;
-  aspect-ratio: ${props => props.$sizePreset === '1920x160' ? '12 / 1' : '1920 / 540'};
+  aspect-ratio: ${props => props.$sizePreset === '1920x158' ? '1920 / 158' : '1920 / 540'};
   display: flex;
 `;
 
@@ -93,7 +94,6 @@ const ResizeHandle = styled(PanelResizeHandle)`
   }
 `;
 
-// [수정] onFileDrop을 prop으로 받도록 인터페이스를 수정합니다.
 interface SceneEditorProps {
   scene: SceneType;
   onZoneClick: (sceneId: string, regionId: string) => void;
@@ -154,7 +154,8 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
             value={scene.sizePreset}
             onChange={(e) => updateSceneSizePreset(scene.id, e.target.value as SceneSize)}
           >
-              <option value="1920x160">1920 x 160</option>
+              {/* [수정] 옵션을 '1920x158'로 변경합니다. */}
+              <option value="1920x158">1920 x 158</option>
               <option value="1920x540">1920 x 540</option>
           </StyledSelect>
         </ControlGroup>
@@ -191,9 +192,9 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
                 <Region 
                   sceneId={scene.id}
                   region={region} 
-                  canvasHeight={scene.sizePreset === '1920x160' ? 160 : 540}
+                  // [수정] canvasHeight 계산 로직을 '158'로 변경합니다.
+                  canvasHeight={scene.sizePreset === '1920x158' ? 158 : 540}
                   onZoneClick={() => onZoneClick(scene.id, region.id)}
-                  // [수정] onFileDrop을 Region 컴포넌트로 전달합니다.
                   onFileDrop={(file) => onFileDrop(scene.id, region.id, file)}
                 />
               </Panel>

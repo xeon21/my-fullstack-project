@@ -296,7 +296,7 @@ export default function EdgeEditorPage() {
               
               const currentScene = scenes[index];
               if (displayWrapper) {
-                displayWrapper.style.aspectRatio = currentScene.sizePreset === '1920x160' ? '12 / 1' : '1920 / 540';
+                displayWrapper.style.aspectRatio = currentScene.sizePreset === '1920x158' ? '1920 / 158' : '1920 / 540';
               }
 
               scenes.forEach((scene, i) => {
@@ -334,7 +334,7 @@ export default function EdgeEditorPage() {
         .display-wrapper { 
             width: 98vw;
             max-width: 1600px;
-            
+
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
         .scene-container { display: flex; width: 100%; height: 100%; }

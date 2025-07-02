@@ -15,15 +15,21 @@ export interface Region {
   content: Content | null;
 }
 
-// [추가] 씬 크기 타입을 정의합니다.
-export type SceneSize = '1920x160' | '1920x540';
+// [수정] SceneSize 타입을 '1920x158'로 변경합니다.
+export type SceneSize = '1920x158' | '1920x540';
 
 export interface Scene {
   id: string;
   name: string;
   regions: Region[];
   transitionTime: number;
-  sizePreset: SceneSize; // [추가] 씬 크기 프리셋
+  sizePreset: SceneSize;
+}
+
+export interface OverwriteConfirmState {
+  sceneId: string;
+  regionId: string;
+  file: File;
 }
 
 const createNewScene = (name: string): Scene => ({
@@ -31,7 +37,8 @@ const createNewScene = (name: string): Scene => ({
   name,
   regions: [{ id: uuidv4(), size: 100, content: null }],
   transitionTime: 5,
-  sizePreset: '1920x160', // [추가] 새 씬의 기본 크기
+  // [수정] 새 씬의 기본 크기를 '1920x158'로 변경합니다.
+  sizePreset: '1920x158',
 });
 
 const createNewRegion = (): Region => ({
@@ -42,14 +49,6 @@ const createNewRegion = (): Region => ({
 
 export interface SavedState {
     scenes: Scene[];
-}
-
-
-// [추가] 덮어쓰기 확인에 필요한 정보를 담을 인터페이스
-export interface OverwriteConfirmState {
-  sceneId: string;
-  regionId: string;
-  file: File;
 }
 
 interface EditorState {
@@ -67,12 +66,10 @@ interface EditorState {
   reset: () => void;
   resetScene: (sceneId: string) => void;
   updateSceneTransitionTime: (sceneId: string, time: number) => void;
-  updateSceneSizePreset: (sceneId: string, size: SceneSize) => void; // [추가] 씬 크기 변경 액션
+  updateSceneSizePreset: (sceneId: string, size: SceneSize) => void;
   loadState: (savedState: SavedState) => void;
-
   setOverwriteConfirm: (data: OverwriteConfirmState) => void;
   clearOverwriteConfirm: () => void;
-  
 }
 
 const initialScene = createNewScene('기본 씬');
@@ -81,17 +78,13 @@ const initialState = {
   scenes: [initialScene],
   activeSceneId: initialScene.id,
   selectedRegionId: null,
-  overwriteConfirm: null, // 초기 상태 추가
+  overwriteConfirm: null,
 };
 
 export const useEditorStore = create<EditorState>((set) => ({
   ...initialState,
 
   setActiveSceneId: (id) => set({ activeSceneId: id, selectedRegionId: null }),
-
-  // --- [추가 시작] 덮어쓰기 관련 액션 구현 ---
-  setOverwriteConfirm: (data) => set({ overwriteConfirm: data }),
-  clearOverwriteConfirm: () => set({ overwriteConfirm: null }),
 
   addScene: (name) =>
     set((state) => {
@@ -138,12 +131,12 @@ export const useEditorStore = create<EditorState>((set) => ({
           : scene
       ),
     })),
-  
-  setSelectedRegionId: (sceneId, regionId) => 
+
+  setSelectedRegionId: (sceneId, regionId) =>
     set(state => ({
         selectedRegionId: regionId ? { sceneId, regionId } : null
     })),
-  
+
   updateSceneTransitionTime: (sceneId, time) =>
     set((state) => ({
       scenes: state.scenes.map((scene) =>
@@ -151,7 +144,6 @@ export const useEditorStore = create<EditorState>((set) => ({
       ),
     })),
 
-  // [추가] 씬 크기 프리셋을 변경하는 액션
   updateSceneSizePreset: (sceneId, size) =>
     set((state) => ({
         scenes: state.scenes.map((scene) =>
@@ -168,12 +160,15 @@ export const useEditorStore = create<EditorState>((set) => ({
         ),
         selectedRegionId: null,
     })),
-    
+
   loadState: (savedState) => set({
     scenes: savedState.scenes,
     activeSceneId: savedState.scenes[0]?.id || null,
     selectedRegionId: null,
   }),
+
+  setOverwriteConfirm: (data) => set({ overwriteConfirm: data }),
+  clearOverwriteConfirm: () => set({ overwriteConfirm: null }),
 
   reset: () => {
     const newInitialScene = createNewScene('기본 씬');
@@ -181,7 +176,7 @@ export const useEditorStore = create<EditorState>((set) => ({
       scenes: [newInitialScene],
       activeSceneId: newInitialScene.id,
       selectedRegionId: null,
-       overwriteConfirm: null,
+      overwriteConfirm: null,
     });
   },
 }));
