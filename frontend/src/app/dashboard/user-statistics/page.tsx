@@ -16,8 +16,8 @@ import {SectionWrapper} from '../..//board/BoardLayout';
 
 // Mock 데이터 (이전과 동일)
 const barChartData = [
-  { name: 'M', uv: 50 }, { name: 'T', uv: 20 }, { name: 'W', uv: 10 },
-  { name: 'T', uv: 22 }, { name: 'F', uv: 5 }, { name: 'S', uv: 15 }, { name: 'S', uv: 42 },
+  { name: 'Mon', uv: 50 }, { name: 'Tue', uv: 20 }, { name: 'Wen', uv: 10 },
+  { name: 'Thu', uv: 22 }, { name: 'Fri', uv: 5 }, { name: 'Sun', uv: 15 }, { name: 'Sat', uv: 42 },
 ];
 const lineChartData = [
   { name: 'Apr', sales: 50 }, { name: 'May', sales: 300 }, { name: 'Jun', sales: 250 },
@@ -120,7 +120,7 @@ export default function UserStatisticsPage() {
             </ChartCard>
           </GridItem>
 
-           <GridItem $lg={2} $md={12} $xs={12}>
+           <GridItem $lg={3} $md={12} $xs={12}>
               <ChartCard title="Total Review" description="(+5%) increase in today reviews">
                 <ResponsiveContainer width="100%" height={200}>
                   {/* BarChart를 PieChart로 변경합니다. */}
