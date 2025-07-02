@@ -70,6 +70,9 @@ interface EditorState {
   loadState: (savedState: SavedState) => void;
   setOverwriteConfirm: (data: OverwriteConfirmState) => void;
   clearOverwriteConfirm: () => void;
+
+  // --- [추가] ---
+  moveRegion: (sceneId: string, fromIndex: number, toIndex: number) => void;
 }
 
 const initialScene = createNewScene('기본 씬');
@@ -160,6 +163,20 @@ export const useEditorStore = create<EditorState>((set) => ({
         ),
         selectedRegionId: null,
     })),
+    // --- [추가] 영역 순서 변경 액션 ---
+  moveRegion: (sceneId, fromIndex, toIndex) =>
+    set((state) => {
+        const sceneToUpdate = state.scenes.find(s => s.id === sceneId);
+        if (!sceneToUpdate) return state;
+
+        const newRegions = Array.from(sceneToUpdate.regions);
+        const [movedItem] = newRegions.splice(fromIndex, 1);
+        newRegions.splice(toIndex, 0, movedItem);
+        
+        return {
+            scenes: state.scenes.map(s => s.id === sceneId ? { ...s, regions: newRegions } : s)
+        };
+    }),
 
   loadState: (savedState) => set({
     scenes: savedState.scenes,

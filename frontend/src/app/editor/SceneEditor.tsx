@@ -1,9 +1,25 @@
 // frontend/src/app/editor/SceneEditor.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent,
+    DragOverlay,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { useEditorStore, Scene as SceneType, Region as RegionType, SceneSize } from '@/store/editorStore';
 import { v4 as uuidv4 } from 'uuid';
 import { Region } from './Region';
@@ -72,7 +88,6 @@ const StyledButton = styled.button<{ $secondary?: boolean }>`
   }
 `;
 
-// [수정] aspect-ratio를 '1920 / 158'로 변경합니다.
 const CanvasWrapper = styled.div<{ $sizePreset: SceneSize }>`
   width: 100%;
   max-width: 1200px;
@@ -86,7 +101,6 @@ const ResizeHandle = styled(PanelResizeHandle)`
   width: 8px;
   background-clip: padding-box;
   background-color: #e0e0e0;
-  border: 2px solid transparent;
   transition: background-color 0.2s;
   
   &:hover {
@@ -106,11 +120,42 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
       setRegions, 
       updateSceneTransitionTime, 
       resetScene, 
-      updateSceneSizePreset
+      updateSceneSizePreset,
+      moveRegion,
   } = useEditorStore();
   
   const [regionCount, setRegionCount] = useState(scene.regions.length);
   const [transitionTime, setTransitionTime] = useState(scene.transitionTime);
+  const [activeRegion, setActiveRegion] = useState<RegionType | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const { active } = event;
+    const region = scene.regions.find(r => r.id === active.id);
+    if (region) {
+      setActiveRegion(region);
+    }
+  }, [scene.regions]);
+  
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+        const oldIndex = scene.regions.findIndex(r => r.id === active.id);
+        const newIndex = scene.regions.findIndex(r => r.id === over.id);
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+            moveRegion(scene.id, oldIndex, newIndex);
+        }
+    }
+    setActiveRegion(null);
+  }, [scene.id, scene.regions, moveRegion]);
 
   useEffect(() => {
     setRegionCount(scene.regions.length);
@@ -145,64 +190,87 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
 
   return (
     <SceneWrapper>
-      <ControlBar>
-        <SceneHeader>{scene.name}</SceneHeader>
-        <div style={{flexGrow: 1}} />
-        <ControlGroup>
-          <label>캔버스 크기:</label>
-          <StyledSelect 
-            value={scene.sizePreset}
-            onChange={(e) => updateSceneSizePreset(scene.id, e.target.value as SceneSize)}
-          >
-              {/* [수정] 옵션을 '1920x158'로 변경합니다. */}
-              <option value="1920x158">1920 x 158</option>
-              <option value="1920x540">1920 x 540</option>
-          </StyledSelect>
-        </ControlGroup>
-        <ControlGroup>
-          <label>영역 개수:</label>
-          <StyledInput
-            type="number"
-            value={regionCount}
-            onChange={(e) => setRegionCount(Number(e.target.value))}
-            min="1" max="10"
-          />
-          <StyledButton onClick={handleApplyRegions}>적용</StyledButton>
-        </ControlGroup>
-        <ControlGroup>
-            <label>플레이 시간(초):</label>
+        <ControlBar>
+            <SceneHeader>{scene.name}</SceneHeader>
+            <div style={{flexGrow: 1}} />
+            <ControlGroup>
+            <label>캔버스 크기:</label>
+            <StyledSelect 
+                value={scene.sizePreset}
+                onChange={(e) => updateSceneSizePreset(scene.id, e.target.value as SceneSize)}
+            >
+                <option value="1920x158">1920 x 158</option>
+                <option value="1920x540">1920 x 540</option>
+            </StyledSelect>
+            </ControlGroup>
+            <ControlGroup>
+            <label>영역 개수:</label>
             <StyledInput
                 type="number"
-                value={transitionTime}
-                onChange={handleTimeChange}
-                min="1"
+                value={regionCount}
+                onChange={(e) => setRegionCount(Number(e.target.value))}
+                min="1" max="10"
             />
-        </ControlGroup>
-        <StyledButton $secondary onClick={handleResetScene}>씬 초기화</StyledButton>
-      </ControlBar>
-      <CanvasWrapper $sizePreset={scene.sizePreset}>
-        <PanelGroup
-          direction="horizontal"
-          onLayout={(sizes) => updateRegionSize(scene.id, sizes)}
-          style={{ width: '100%', height: '100%' }}
-        >
-          {scene.regions.map((region, index) => (
-            <React.Fragment key={region.id}>
-              <Panel defaultSize={region.size} minSize={5}>
-                <Region 
-                  sceneId={scene.id}
-                  region={region} 
-                  // [수정] canvasHeight 계산 로직을 '158'로 변경합니다.
-                  canvasHeight={scene.sizePreset === '1920x158' ? 158 : 540}
-                  onZoneClick={() => onZoneClick(scene.id, region.id)}
-                  onFileDrop={(file) => onFileDrop(scene.id, region.id, file)}
+            <StyledButton onClick={handleApplyRegions}>적용</StyledButton>
+            </ControlGroup>
+            <ControlGroup>
+                <label>플레이 시간(초):</label>
+                <StyledInput
+                    type="number"
+                    value={transitionTime}
+                    onChange={handleTimeChange}
+                    min="1"
                 />
-              </Panel>
-              {index < scene.regions.length - 1 && <ResizeHandle />}
-            </React.Fragment>
-          ))}
-        </PanelGroup>
-      </CanvasWrapper>
+            </ControlGroup>
+            <StyledButton $secondary onClick={handleResetScene}>씬 초기화</StyledButton>
+        </ControlBar>
+        <CanvasWrapper $sizePreset={scene.sizePreset}>
+            <DndContext 
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext 
+                    items={scene.regions.map(r => r.id)}
+                    strategy={horizontalListSortingStrategy}
+                >
+                    <PanelGroup
+                        direction="horizontal"
+                        onLayout={(sizes) => updateRegionSize(scene.id, sizes)}
+                        style={{ width: '100%', height: '100%' }}
+                    >
+                        {scene.regions.map((region, index) => (
+                            <React.Fragment key={region.id}>
+                                <Panel defaultSize={region.size} minSize={5}>
+                                    <Region 
+                                        sceneId={scene.id}
+                                        region={region} 
+                                        canvasHeight={scene.sizePreset === '1920x158' ? 158 : 540}
+                                        onZoneClick={() => onZoneClick(scene.id, region.id)}
+                                        onFileDrop={(file) => onFileDrop(scene.id, region.id, file)}
+                                    />
+                                </Panel>
+                                {index < scene.regions.length - 1 && <ResizeHandle />}
+                            </React.Fragment>
+                        ))}
+                    </PanelGroup>
+                </SortableContext>
+                
+                <DragOverlay>
+                  {activeRegion ? (
+                      <Region
+                        isDragOverlay={true}
+                        sceneId={scene.id}
+                        region={activeRegion}
+                        canvasHeight={scene.sizePreset === '1920x158' ? 158 : 540}
+                        onZoneClick={() => {}}
+                        onFileDrop={() => {}}
+                      />
+                  ) : null}
+                </DragOverlay>
+            </DndContext>
+        </CanvasWrapper>
     </SceneWrapper>
   );
 };

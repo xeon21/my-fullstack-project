@@ -1,30 +1,73 @@
 // frontend/src/app/editor/Region.tsx
 'use client';
 
-import React, { useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import React, { useState, CSSProperties } from 'react';
+import styled, { css } from 'styled-components';
 import { useEditorStore, Region as RegionType } from '@/store/editorStore';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-const Zone = styled.div<{ $isSelected: boolean; $isDragOver: boolean; }>`
+const Zone = styled.div<{
+  $isSelected: boolean;
+  $isDragOver: boolean;
+  $isDragging: boolean;
+  $isDropTarget: boolean;
+  $isDragOverlay: boolean;
+}>`
   position: relative;
   height: 100%;
   width: 100%;
-  border: 2px dashed ${props =>
+  border-style: ${props => props.$isDropTarget ? 'solid' : 'dashed'};
+  border-width: 2px;
+  border-color: ${props =>
+    props.$isDropTarget ? '#2980b9' : 
     props.$isDragOver ? '#16a085' :
     props.$isSelected ? '#e67e22' :
-    '#3498db'};
-  box-shadow: ${props => props.$isSelected ? '0 0 10px rgba(230, 126, 34, 0.5)' : 'none'};
+    '#bdc3c7'};
+
   padding: 0.5rem;
   box-sizing: border-box;
-  background-color: ${props => props.$isDragOver ? '#e8f8f5' : '#f0f8ff'};
+  background-color: ${props => props.$isDragOver ? '#e8f8f5' : (props.$isDropTarget ? '#eaf5ff' : '#f8f9fa')};
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   transition: all 0.2s;
-  cursor: pointer;
+  cursor: ${props => props.$isDragOverlay ? 'grabbing' : 'pointer'};
+  
+  // 드래그 복제본(Overlay)에 적용될 스타일
+  ${props => props.$isDragOverlay && css`
+    opacity: 0.95;
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  `}
 
+  .drag-handle {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(0,0,0,0.5);
+    border-radius: 50%;
+    cursor: grab;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  &:hover .drag-handle {
+    opacity: 1;
+  }
+  .drag-handle:active {
+    cursor: grabbing;
+  }
+  
   p {
       font-size: 0.85rem;
       color: #555;
@@ -33,11 +76,22 @@ const Zone = styled.div<{ $isSelected: boolean; $isDragOver: boolean; }>`
   }
 
   &:hover {
-    background-color: #e0f0ff;
+    background-color: #f0f8ff;
   }
+
+  // 드래그 중인 '원본' 아이템의 스타일
+  ${props => props.$isDragging && css`
+    border-color: #e0e0e0;
+    background-color: #f5f5f5;
+    & > * {
+      visibility: hidden;
+    }
+  `}
 `;
 
-const ContentWrapper = styled.div`
+const ContentWrapper = styled.div.attrs({
+  className: 'content-wrapper'
+})`
   width: 100%;
   height: 100%;
   pointer-events: none;
@@ -49,7 +103,9 @@ const ContentWrapper = styled.div`
   }
 `;
 
-const SizeDisplay = styled.div`
+const SizeDisplay = styled.div.attrs({
+  className: 'size-display'
+})`
   position: absolute;
   bottom: 5px;
   right: 8px;
@@ -63,7 +119,9 @@ const SizeDisplay = styled.div`
   pointer-events: none;
 `;
 
-const ModifyButton = styled.button`
+const ModifyButton = styled.button.attrs({
+    className: 'modify-button'
+})`
   position: absolute;
   top: 10px;
   right: 10px;
@@ -84,27 +142,43 @@ const ModifyButton = styled.button`
   }
 `;
 
-// [수정] onFileDrop prop을 포함하도록 인터페이스를 수정합니다.
 interface RegionProps {
   sceneId: string;
   region: RegionType;
   canvasHeight: number;
   onZoneClick: () => void;
   onFileDrop: (file: File) => void;
+  isDragOverlay?: boolean;
 }
 
 const VIRTUAL_CANVAS_WIDTH = 1920;
 
-export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop }: RegionProps) => {
+export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop, isDragOverlay = false }: RegionProps) => {
   const { selectedRegionId, setSelectedRegionId, setOverwriteConfirm } = useEditorStore();
   const [isDragOver, setIsDragOver] = useState(false);
+  
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({id: region.id, disabled: isDragOverlay});
+  
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    height: '100%',
+    width: '100%',
+  };
 
   const isSelected = selectedRegionId?.sceneId === sceneId && selectedRegionId?.regionId === region.id;
-
+  
   const handleClick = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).tagName === 'BUTTON') {
+    if ((e.target as HTMLElement).classList.contains('drag-handle') || (e.target as HTMLElement).tagName === 'BUTTON') {
       e.stopPropagation();
-      onZoneClick();
       return;
     }
     
@@ -129,7 +203,6 @@ export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop 
       if (region.content) {
         setOverwriteConfirm({ sceneId, regionId: region.id, file });
       } else {
-        // [수정] onFileDrop을 호출하여 파일을 처리합니다.
         onFileDrop(file);
       }
       e.dataTransfer.clearData();
@@ -144,7 +217,7 @@ export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop 
       case 'image':
         return <img src={region.content.src} alt="콘텐츠 이미지" />;
       case 'video':
-        return <video src={region.content.src} controls muted loop playsInline />;
+        return <video src={region.content.src} autoPlay muted loop playsInline />;
       case 'webpage':
         return <iframe srcDoc={region.content.src} title="웹페이지 콘텐츠" />;
       default:
@@ -156,24 +229,31 @@ export const Region = ({ sceneId, region, canvasHeight, onZoneClick, onFileDrop 
   const sizeText = `${virtualWidth} x ${canvasHeight}`;
 
   return (
-    <Zone
-      $isSelected={isSelected}
-      $isDragOver={isDragOver}
-      onClick={handleClick}
-      onDragEnter={handleDragEnter}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+    <div
+        ref={setNodeRef}
+        style={style}
+        onClick={handleClick}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        {...attributes}
     >
-      {region.content && (
-        <ModifyButton onClick={onZoneClick}>
-          수정
-        </ModifyButton>
-      )}
-      <ContentWrapper>
-        {renderContent()}
-      </ContentWrapper>
-      <SizeDisplay>{sizeText}</SizeDisplay>
-    </Zone>
+        <Zone
+            $isSelected={isSelected}
+            $isDragOver={isDragOver}
+            $isDragging={isDragging}
+            $isDropTarget={isOver && !isDragging}
+            $isDragOverlay={isDragOverlay}
+        >
+            {!isDragOverlay && <div className="drag-handle" {...listeners}>⠿</div>}
+            
+            {region.content && !isDragOverlay && (
+                <ModifyButton onClick={onZoneClick}>수정</ModifyButton>
+            )}
+            <ContentWrapper>{renderContent()}</ContentWrapper>
+            <SizeDisplay>{sizeText}</SizeDisplay>
+        </Zone>
+    </div>
   );
 };
