@@ -38,15 +38,7 @@ export const menuItems: MenuItem[] = [
             { title: '유저통계', path: '/dashboard/user-statistics' }
         ]
     },
-     // --- [추가 시작] ---
-    {
-        title: 'Settings',
-        icon: '⚙️',
-        pathPrefix: '/settings',
-        children: [
-            { title: 'Canvas Resolutions', path: '/admin/resolutions' },
-        ]
-    },
+   
     { title: 'Gateway Statue', icon: '📡', path: '/gateway-status'},
     { title: 'Tag Status', icon: '🏷️', path: '/tag-status'},
     { title: 'Sensor Status', icon: '🌡️', path: '/sensor-status'},

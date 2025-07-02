@@ -102,7 +102,7 @@ export default function ServerStatusPage() {
       </ControlsContainer>
 
       <GridContainer>
-        <GridItem $lg={12} $md={12} $xs={12}>
+        <GridItem $lg={8} $md={12} $xs={12}>
           {loading ? (
             <LoadingOrErrorContainer>데이터를 불러오는 중입니다...</LoadingOrErrorContainer>
           ) : error ? (

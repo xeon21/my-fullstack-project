@@ -7,7 +7,7 @@ import StatusIcon from './StatusIcon';
 const ItemRow = styled.div`
   display: flex;
   align-items: center;
-  padding: 1rem;
+  padding: 0.4rem;
   border-bottom: 1px solid #34495e;
 
   &:last-child {
@@ -18,13 +18,14 @@ const ItemRow = styled.div`
 const Column = styled.div<{ $flex: number; }>`
   flex: ${props => props.$flex};
   color: #ecf0f1;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 500;
 `;
 
 const ServerNameColumn = styled(Column)`
   font-weight: 700;
 `;
+
 
 
 interface ServerStatusListItemProps {

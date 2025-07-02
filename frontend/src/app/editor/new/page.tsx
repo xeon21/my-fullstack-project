@@ -26,9 +26,11 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
+import DashboardLayout from '../../components/layout/DashboardLayout';
+
 const PageWrapper = styled.div`
   padding: 1rem;
-  background-color: #f0f2f5;
+  background-color:rgb(220, 225, 233);
   min-height: 100vh;
 `;
 

@@ -14,7 +14,7 @@ const Title = styled.h3`
 `;
 
 const Subtitle = styled.p`
-  color: #95a5a6;
+  color:rgb(228, 236, 236);
   font-size: 0.875rem;
   margin: 0;
   display: flex;
@@ -31,8 +31,8 @@ const TableHeader = styled.div`
     display: flex;
     padding: 0 1rem 0.5rem 1rem;
     border-bottom: 1px solid #34495e;
-    color: #95a5a6;
-    font-size: 0.75rem;
+    color:rgb(232, 241, 241);
+    font-size: 1rem;
     text-transform: uppercase;
 `;
 
@@ -64,8 +64,8 @@ export default function ProjectListCard({ title, subtitle, children }: ProjectLi
       <TableHeader>
           <Column $flex={3}>이름 (한글)</Column>
           <Column $flex={2}>이름 (영문)</Column>
-          <Column $flex={2} $align="center">CO2 (타입1)</Column>
-          <Column $flex={3}>LIFE (타입1)</Column>
+          <Column $flex={2} $align="center">맨 먼쓰</Column>
+          <Column $flex={3}>작업 진행</Column>
       </TableHeader>
       <ListContainer>
         {children}

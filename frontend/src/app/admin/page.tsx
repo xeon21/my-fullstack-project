@@ -101,7 +101,7 @@ export default function AdminPage() {
   return (
     <DashboardLayout $bgColor="#1c2833">
         <ControlsContainer>
-            <PageTitle>유저정보</PageTitle>
+            
             <div>
               <SearchInput
                 type="number"
@@ -120,7 +120,7 @@ export default function AdminPage() {
                 ) : error ? (
                   <LoadingOrErrorContainer>데이터 로딩 중 오류가 발생했습니다: {error}</LoadingOrErrorContainer>
                 ) : (
-                  <ProjectListCard title="나무 목록" subtitle={`${doneCount}개의 정보 조회됨`}>
+                  <ProjectListCard title="유저정보" subtitle={`${doneCount}개의 정보 조회됨`}>
                     {data.map((tree, index) => (
                       <ProjectListItem
                         key={index}

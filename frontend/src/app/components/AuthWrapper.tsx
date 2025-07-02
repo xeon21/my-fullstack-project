@@ -42,17 +42,16 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     if (pathname === '/login') return null;
 
     return (
-      // [수정] backgroundColor를 어두운 색상으로 변경합니다.
-      <div style={{ display: 'flex', height: '100vh', backgroundColor: '#1c2833', fontFamily: 'sans-serif' }}>
+      <div style={{ display: 'flex', height: '100vh', backgroundColor: '#1c2833' }}>
         <Sidebar />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <Header />
+          {/* --- [핵심 수정] --- */}
+          {/* main 태그에 직접 padding을 적용하여 모든 페이지의 기본 여백을 통일합니다. */}
           <main style={{
               flex: 1,
-              // [수정] isFullbleedPage 변수를 사용하여 padding과 배경색을 결정
-              padding: isFullbleedPage ? '0' : '2rem',
-              backgroundColor: isFullbleedPage ? 'transparent' : '#f1f5f9',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              padding: '1.5rem', // 모든 페이지에 일관된 여백 적용
           }}>
             {children}
           </main>
