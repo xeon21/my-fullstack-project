@@ -38,11 +38,29 @@ export const menuItems: MenuItem[] = [
             { title: '유저통계', path: '/dashboard/user-statistics' }
         ]
     },
+     // --- [추가 시작] ---
+    {
+        title: 'Settings',
+        icon: '⚙️',
+        pathPrefix: '/settings',
+        children: [
+            { title: 'Canvas Resolutions', path: '/admin/resolutions' },
+        ]
+    },
     { title: 'Gateway Statue', icon: '📡', path: '/gateway-status'},
     { title: 'Tag Status', icon: '🏷️', path: '/tag-status'},
     { title: 'Sensor Status', icon: '🌡️', path: '/sensor-status'},
     { title: 'Product Search', icon: '🔍', path: '/product-search'},
-    { title: 'Editor',  icon: 'ℹ️',   path: '/editor/new'},
+    
+     {
+        title: 'Editor',
+        icon: 'ℹ️',
+        pathPrefix: '/editor',
+        children: [
+            { title: '템플릿에디터', path: '/editor/new' },
+            { title: '캔버스해상도추가', path:  '/editor/resolutions' }
+        ]
+    },
 ];
 
 

@@ -1,7 +1,6 @@
 // frontend/src/app/editor/SceneEditor.tsx
 'use client';
 
-// [수정] useCallback을 import 합니다.
 import React, { useState, useEffect, useCallback, CSSProperties } from 'react';
 import styled from 'styled-components';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -21,7 +20,7 @@ import {
     sortableKeyboardCoordinates,
     horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useEditorStore, Scene as SceneType, Region as RegionType, SceneSize } from '@/store/editorStore';
+import { useEditorStore, Scene as SceneType, Region as RegionType } from '@/store/editorStore';
 import { v4 as uuidv4 } from 'uuid';
 import { Region } from './Region';
 
@@ -89,12 +88,12 @@ const StyledButton = styled.button<{ $secondary?: boolean }>`
   }
 `;
 
-const CanvasWrapper = styled.div<{ $sizePreset: SceneSize }>`
+const CanvasWrapper = styled.div<{ $width: number; $height: number }>`
   width: 100%;
   max-width: 1200px;
   margin: 1rem auto 0 auto;
   border: 1px solid #d1d5db;
-  aspect-ratio: ${props => props.$sizePreset === '1920x158' ? '1920 / 158' : '1920 / 540'};
+  aspect-ratio: ${props => `${props.$width} / ${props.$height}`};
   display: flex;
 `;
 
@@ -120,14 +119,17 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
       updateRegionSize, 
       setRegions, 
       updateSceneTransitionTime, 
-      resetScene, 
-      updateSceneSizePreset,
+      resetScene,
+      canvasResolutions,
+      updateSceneResolution,
       moveRegion,
   } = useEditorStore();
   
   const [regionCount, setRegionCount] = useState(scene.regions.length);
   const [transitionTime, setTransitionTime] = useState(scene.transitionTime);
   const [activeRegion, setActiveRegion] = useState<RegionType | null>(null);
+
+  const selectedResolution = canvasResolutions.find(r => r.id === scene.resolutionId) || canvasResolutions[0];
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -136,7 +138,6 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
     })
   );
 
-  // --- [핵심 수정] 모든 핸들러 함수를 useCallback으로 감싸서 불필요한 재생성을 방지합니다. ---
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
     const region = scene.regions.find(r => r.id === active.id);
@@ -197,12 +198,15 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
             <div style={{flexGrow: 1}} />
             <ControlGroup>
             <label>캔버스 크기:</label>
-            <StyledSelect 
-                value={scene.sizePreset}
-                onChange={(e) => updateSceneSizePreset(scene.id, e.target.value as SceneSize)}
+            <StyledSelect
+                value={scene.resolutionId ?? ''}
+                onChange={(e) => updateSceneResolution(scene.id, Number(e.target.value))}
             >
-                <option value="1920x158">1920 x 158</option>
-                <option value="1920x540">1920 x 540</option>
+                {canvasResolutions.map(res => (
+                    <option key={res.id} value={res.id}>
+                        {res.name}
+                    </option>
+                ))}
             </StyledSelect>
             </ControlGroup>
             <ControlGroup>
@@ -226,53 +230,55 @@ export const SceneEditor = ({ scene, onZoneClick, onFileDrop }: SceneEditorProps
             </ControlGroup>
             <StyledButton $secondary onClick={handleResetScene}>씬 초기화</StyledButton>
         </ControlBar>
-        <CanvasWrapper $sizePreset={scene.sizePreset}>
-            <DndContext 
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-            >
-                <SortableContext 
-                    items={scene.regions.map(r => r.id)}
-                    strategy={horizontalListSortingStrategy}
+        {selectedResolution && (
+            <CanvasWrapper $width={selectedResolution.width} $height={selectedResolution.height}>
+                <DndContext 
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
                 >
-                    <PanelGroup
-                        direction="horizontal"
-                        onLayout={(sizes) => updateRegionSize(scene.id, sizes)}
-                        style={{ width: '100%', height: '100%' }}
+                    <SortableContext 
+                        items={scene.regions.map(r => r.id)}
+                        strategy={horizontalListSortingStrategy}
                     >
-                        {scene.regions.map((region, index) => (
-                            <React.Fragment key={region.id}>
-                                <Panel defaultSize={region.size} minSize={5}>
-                                    <Region 
-                                        sceneId={scene.id}
-                                        region={region} 
-                                        canvasHeight={scene.sizePreset === '1920x158' ? 158 : 540}
-                                        onZoneClick={() => onZoneClick(scene.id, region.id)}
-                                        onFileDrop={(file) => onFileDrop(scene.id, region.id, file)}
-                                    />
-                                </Panel>
-                                {index < scene.regions.length - 1 && <ResizeHandle />}
-                            </React.Fragment>
-                        ))}
-                    </PanelGroup>
-                </SortableContext>
-                
-                <DragOverlay>
-                  {activeRegion ? (
-                      <Region
-                        isDragOverlay={true}
-                        sceneId={scene.id}
-                        region={activeRegion}
-                        canvasHeight={scene.sizePreset === '1920x158' ? 158 : 540}
-                        onZoneClick={() => {}}
-                        onFileDrop={() => {}}
-                      />
-                  ) : null}
-                </DragOverlay>
-            </DndContext>
-        </CanvasWrapper>
+                        <PanelGroup
+                            direction="horizontal"
+                            onLayout={(sizes) => updateRegionSize(scene.id, sizes)}
+                            style={{ width: '100%', height: '100%' }}
+                        >
+                            {scene.regions.map((region, index) => (
+                                <React.Fragment key={region.id}>
+                                    <Panel defaultSize={region.size} minSize={5}>
+                                        <Region 
+                                            sceneId={scene.id}
+                                            region={region} 
+                                            canvasHeight={selectedResolution.height}
+                                            onZoneClick={() => onZoneClick(scene.id, region.id)}
+                                            onFileDrop={(file) => onFileDrop(scene.id, region.id, file)}
+                                        />
+                                    </Panel>
+                                    {index < scene.regions.length - 1 && <ResizeHandle />}
+                                </React.Fragment>
+                            ))}
+                        </PanelGroup>
+                    </SortableContext>
+                    
+                    <DragOverlay>
+                    {activeRegion && (
+                        <Region
+                            isDragOverlay={true}
+                            sceneId={scene.id}
+                            region={activeRegion}
+                            canvasHeight={selectedResolution.height}
+                            onZoneClick={() => {}}
+                            onFileDrop={() => {}}
+                        />
+                    )}
+                    </DragOverlay>
+                </DndContext>
+            </CanvasWrapper>
+        )}
     </SceneWrapper>
   );
 };
