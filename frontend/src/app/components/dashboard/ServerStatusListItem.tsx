@@ -1,32 +1,22 @@
+// frontend/src/app/components/dashboard/ServerStatusListItem.tsx
 'use client';
 
 import React from 'react';
 import styled from 'styled-components';
 import StatusIcon from './StatusIcon';
-
-const ItemRow = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 0.4rem;
-  border-bottom: 1px solid #34495e;
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const Column = styled.div<{ $flex: number; }>`
-  flex: ${props => props.$flex};
-  color: #ecf0f1;
-  font-size: 0.8rem;
-  font-weight: 500;
-`;
+// 새로 만든 BoardListItem의 스타일 컴포넌트를 임포트합니다.
+import {
+  ItemRow,
+  Column,
+} from '../../board/BoardListItem';
 
 const ServerNameColumn = styled(Column)`
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #ecf0f1;
+  font-weight: 500;
 `;
-
-
 
 interface ServerStatusListItemProps {
   serverName: string;
@@ -34,7 +24,11 @@ interface ServerStatusListItemProps {
   status: string;
 }
 
-export default function ServerStatusListItem({ serverName, region, status }: ServerStatusListItemProps) {
+export default function ServerStatusListItem({
+  serverName,
+  region,
+  status,
+}: ServerStatusListItemProps) {
   const isActive = status === '1';
 
   return (

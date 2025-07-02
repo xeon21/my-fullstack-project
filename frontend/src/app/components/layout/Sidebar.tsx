@@ -34,7 +34,7 @@ export const menuItems: MenuItem[] = [
         pathPrefix: '/dashboard',
         permission: 'menu_dashboard_view',
         children: [
-            { title: 'Server Status', path: '/dashboard/server-status' },
+           // { title: 'Server Status', path: '/dashboard/server-status' },
             { title: '유저통계', path: '/dashboard/user-statistics' }
         ]
     },

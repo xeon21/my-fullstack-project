@@ -29,7 +29,7 @@ const ChartContainer = styled.div`
 
 interface ChartCardProps {
   title: string;
-  description: string;
+  description?: string;
   children: React.ReactNode; // 차트 컴포넌트를 자식으로 받습니다.
 }
 
