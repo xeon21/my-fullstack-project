@@ -34,7 +34,7 @@ export const menuItems: MenuItem[] = [
         pathPrefix: '/dashboard',
         permission: 'menu_dashboard_view',
         children: [
-           // { title: 'Server Status', path: '/dashboard/server-status' },
+            { title: 'Server Status', path: '/dashboard/server-status' },
             { title: '유저통계', path: '/dashboard/user-statistics' }
         ]
     },
@@ -42,8 +42,7 @@ export const menuItems: MenuItem[] = [
     { title: 'Gateway Statue', icon: '📡', path: '/gateway-status'},
     { title: 'Tag Status', icon: '🏷️', path: '/tag-status'},
     { title: 'Sensor Status', icon: '🌡️', path: '/sensor-status'},
-    { title: 'Product Search', icon: '🔍', path: '/product-search'},
-    
+      
      {
         title: 'Editor',
         icon: 'ℹ️',
@@ -53,6 +52,8 @@ export const menuItems: MenuItem[] = [
             { title: '캔버스해상도추가', path:  '/editor/resolutions' }
         ]
     },
+
+    
 ];
 
 
@@ -173,31 +174,34 @@ const LogoutButton = styled.button`
 export default function Sidebar() {
   const pathname = usePathname();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  
   const logout = useAuthStore((state) => state.logout);
   const hasPermission = useAuthStore((state) => state.hasPermission);
-  
-  // [핵심 수정 1] user 객체를 가져옵니다. useMemo의 의존성으로 사용하기 위함입니다.
   const user = useAuthStore((state) => state.user);
 
-  // [핵심 수정 2] useMemo를 사용하여 accessibleMenuItems 배열을 메모이제이션합니다.
   const accessibleMenuItems = useMemo(() => {
     return menuItems.filter(item =>
       item.permission ? hasPermission(item.permission) : true
     );
-  }, [user, hasPermission]); // user의 정보(권한)가 바뀔 때만 이 배열을 다시 계산합니다.
+  }, [user, hasPermission]);
 
-  // [핵심 수정 3] useEffect 로직을 복원하고, 의존성 배열에 안정적인 accessibleMenuItems를 추가합니다.
   useEffect(() => {
-    const currentMenu = accessibleMenuItems.find(item => item.pathPrefix && pathname.startsWith(item.pathPrefix));
+    const currentMenu = accessibleMenuItems.find(item => 
+        (item.path && pathname === item.path) || 
+        (item.pathPrefix && pathname.startsWith(item.pathPrefix))
+    );
+    
     if (currentMenu) {
+      setActiveMenu(currentMenu.title);
+      if (currentMenu.children) {
         setOpenMenu(currentMenu.title);
-    } else {
-        // 현재 경로가 하위 메뉴에 속하지 않으면, 열려있는 메뉴를 닫습니다.
-        setOpenMenu(null);
+      }
     }
-  }, [pathname, accessibleMenuItems]); // 이제 이 훅은 경로가 바뀌거나, 권한이 바뀔 때만 실행됩니다.
+  }, [pathname, accessibleMenuItems]);
 
-  const toggleMenu = (title: string) => {
+  const handleMenuToggle = (title: string) => {
+    setActiveMenu(title);
     setOpenMenu(prevOpenMenu => (prevOpenMenu === title ? null : title));
   };
   
@@ -210,8 +214,8 @@ export default function Sidebar() {
             {item.children ? (
               <>
                 <MenuButton
-                  $isActive={!!(item.pathPrefix && pathname.startsWith(item.pathPrefix))}
-                  onClick={() => toggleMenu(item.title)}
+                  $isActive={activeMenu === item.title}
+                  onClick={() => handleMenuToggle(item.title)}
                 >
                   <IconSpan>{item.icon}</IconSpan>
                   <MenuText>{item.title}</MenuText>
@@ -232,7 +236,7 @@ export default function Sidebar() {
             ) : (
               <DirectLink
                 href={item.path || '#'}
-                $isActive={pathname === item.path}
+                $isActive={activeMenu === item.title}
               >
                 <IconSpan>{item.icon}</IconSpan>
                 <MenuText>{item.title}</MenuText>

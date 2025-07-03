@@ -1,0 +1,8 @@
+# Ignore specific folders and files from ESLint
+/src/app/editor
+/src/app/admin
+/src/app/components
+/src/app/dashboard
+/src/app/login
+/src/store/authStore.ts
+/src/store/editorStore.ts
