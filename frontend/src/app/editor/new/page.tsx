@@ -118,7 +118,7 @@ const HiddenFileInput = styled.input`
 `;
 
 export default function EdgeEditorPage() {
-    const { scenes, addScene, updateRegionContent, reset, loadState, overwriteConfirm, clearOverwriteConfirm, moveScene, fetchCanvasResolutions } = useEditorStore();
+    const { scenes, addScene, updateRegionContent, reset, loadState, overwriteConfirm, clearOverwriteConfirm, moveScene, fetchCanvasResolutions,canvasResolutions } = useEditorStore();
     const { accessToken } = useAuthStore();
 
     const searchParams = useSearchParams();
@@ -287,7 +287,118 @@ export default function EdgeEditorPage() {
         setIsLoadModalOpen(false);
     };
 
-    const handleExport = () => { /* ... */ };
+    // --- [핵심 수정] handleExport 함수 수정 ---
+    const handleExport = () => {
+        const sceneData = scenes.map(scene => {
+            const resolution = canvasResolutions.find(r => r.id === scene.resolutionId);
+            const aspectRatio = resolution ? `${resolution.width} / ${resolution.height}` : '1920 / 158';
+            
+            return {
+                id: scene.id,
+                html: `
+                <div id="scene-${scene.id}" class="scene-container" style="display: none;">
+                  ${scene.regions.map(region => {
+                    let contentHtml = '';
+                    if (region.content) {
+                      switch (region.content.type) {
+                        case 'image':
+                          contentHtml = `<img src="${region.content.src}" alt="">`;
+                          break;
+                        case 'video':
+                          contentHtml = `<video src="${region.content.src}" autoplay muted loop playsinline></video>`;
+                          break;
+                        case 'webpage':
+                          const escapedSrc = region.content.src.replace(/"/g, '&quot;');
+                          contentHtml = `<iframe srcdoc="${escapedSrc}"></iframe>`;
+                          break;
+                      }
+                    }
+                    return `<div class="region" style="flex-basis: ${region.size}%;">${contentHtml}</div>`;
+                  }).join('')}
+                </div>
+              `,
+              transitionTime: scene.transitionTime * 1000,
+              aspectRatio: aspectRatio, // sizePreset 대신 aspectRatio 전달
+            }
+        });
+
+        const escapedSceneData = JSON.stringify(sceneData).replace(/<\/script>/g, '<\\/script>');
+
+        const script = `
+          <script>
+            const scenes = ${escapedSceneData};
+            let currentSceneIndex = 0;
+            const displayWrapper = document.querySelector('.display-wrapper');
+
+            function showScene(index) {
+              if (!scenes[index]) return;
+              
+              const currentScene = scenes[index];
+              if (displayWrapper) {
+                // aspect-ratio를 직접 설정
+                displayWrapper.style.aspectRatio = currentScene.aspectRatio;
+              }
+
+              scenes.forEach((scene, i) => {
+                const el = document.getElementById('scene-' + scene.id);
+                if(el) el.style.display = i === index ? 'flex' : 'none';
+              });
+
+              if (scenes.length > 1) {
+                const nextDelay = currentScene.transitionTime;
+                if (nextDelay > 0) {
+                    setTimeout(nextScene, nextDelay);
+                }
+              }
+            }
+
+            function nextScene() {
+              currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
+              showScene(currentSceneIndex);
+            }
+
+            if (scenes.length > 0) {
+              showScene(0);
+            }
+          <\/script>
+        `;
+
+        const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>${projectName}</title>
+      <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #2c3e50; display: flex; justify-content: center; align-items: center;}
+        .display-wrapper { 
+            width: 98vw;
+            max-width: 1600px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .scene-container { display: flex; width: 100%; height: 100%; }
+        .region { height: 100%; box-sizing: border-box; overflow: hidden; background-color: #eee; }
+        .region img, .region video, .region iframe { 
+            width: 100%; height: 100%; object-fit: cover; border: none; display: block; margin: 0px; padding: 0px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="display-wrapper">
+        ${sceneData.map(s => s.html).join('')}
+      </div>
+      ${script}
+    </body>
+    </html>`;
+
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${projectName}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const handleNewProject = () => {
         reset();

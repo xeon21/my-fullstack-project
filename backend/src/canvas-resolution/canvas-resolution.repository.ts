@@ -16,7 +16,7 @@ export class CanvasResolutionRepository {
 
   async findAll() {
     console.log
-    const query = 'SELECT * FROM canvas_resolutions ORDER BY width, height';
+    const query = 'SELECT * FROM canvas_resolutions ORDER BY id ASC';
      console.log(query);
     return this.db.executeQuery(query);
   }
