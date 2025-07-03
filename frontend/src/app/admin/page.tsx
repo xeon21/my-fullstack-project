@@ -111,7 +111,7 @@ export default function AdminPage() {
       <SectionWrapper>
         <GridContainer $gap="2rem">
           {/* [수정] 그리드 비율을 8:4로 명확하게 조정합니다. */}
-          <GridItem $lg={8} $md={12} $xs={12}>
+          <GridItem $lg={9} $md={12} $xs={12}>
             {userLoading ? (
               <LoadingOrErrorContainer>유저 정보를 불러오는 중입니다...</LoadingOrErrorContainer>
             ) : userError ? (
@@ -145,7 +145,7 @@ export default function AdminPage() {
             )}
           </GridItem>
 
-          <GridItem $lg={4} $md={12} $xs={12}>
+          <GridItem $lg={3} $md={12} $xs={12}>
             {serverLoading ? (
               <LoadingOrErrorContainer>서버 상태를 불러오는 중입니다...</LoadingOrErrorContainer>
             ) : serverError ? (
@@ -179,7 +179,7 @@ export default function AdminPage() {
         </GridContainer>
       </SectionWrapper>
       <GridContainer $gap="2rem">
-        <GridItem $lg={3} $md={12} $xs={12}>
+        <GridItem $lg={12} $md={12} $xs={12}>
           <ProjectListCard
             title="프로젝트 관리"
             subtitle="프로젝트 목록을 관리합니다."
