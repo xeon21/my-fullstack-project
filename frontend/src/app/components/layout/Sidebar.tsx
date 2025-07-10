@@ -52,6 +52,14 @@ export const menuItems: MenuItem[] = [
             { title: '캔버스해상도추가', path:  '/editor/resolutions' }
         ]
     },
+    {
+        title: 'Dynamic Page',
+        icon: '✨',
+        pathPrefix: '/dynamic_page',
+        children: [
+            { title: '다이나믹 에디터', path: '/dynamic_page/new' },
+        ]
+    },
 
     
 ];
