@@ -7,6 +7,9 @@ import { AuthModule } from './auth/auth.modules';
 import { ProjectModule } from './project/project.module';
 import { CanvasResolutionModule } from './canvas-resolution/canvas-resolution.module'; // [추가]
 
+import { ScheduleModule } from '@nestjs/schedule'; // [추가]
+import { ResourceModule } from './resource/resource.module'; // [추가]
+
 @Module({
 
   //imports: [
@@ -28,6 +31,8 @@ import { CanvasResolutionModule } from './canvas-resolution/canvas-resolution.mo
     AuthModule,
     ProjectModule,
     CanvasResolutionModule,
+    ScheduleModule.forRoot(), // [추가] 스케줄 모듈 활성화
+    ResourceModule, // [추가] 새로 만들 리소스 모듈
   ],
    
 })
