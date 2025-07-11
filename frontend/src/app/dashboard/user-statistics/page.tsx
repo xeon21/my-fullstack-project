@@ -35,7 +35,7 @@ export default function UserStatisticsPage() {
       <GridContainer $gap="0.5rem">
 
           {/* 통계 카드 섹션 - 각 GridItem에 반응형 크기를 지정합니다. */}
-          <GridItem $lg={2} $md={12} $xs={12}>
+          <GridItem $lg={3} $md={12} $xs={12}>
             <StatisticsCard
               icon={'🧳'}
               iconColor="#34495e"
@@ -44,7 +44,7 @@ export default function UserStatisticsPage() {
               percentage={{ color: 'success', amount: '+55%', label: 'than last week' }}
             />
           </GridItem>
-          <GridItem $lg={2} $md={12} $xs={12}>
+          <GridItem $lg={3} $md={12} $xs={12}>
             <StatisticsCard
               icon={'🏠'}
               iconColor="#27ae60"
@@ -53,7 +53,7 @@ export default function UserStatisticsPage() {
               percentage={{ color: 'success', amount: '+1%', label: 'than yesterday' }}
             />
           </GridItem>
-          <GridItem $lg={2} $md={12} $xs={12}>
+          <GridItem $lg={3} $md={12} $xs={12}>
             <StatisticsCard
               icon={'👥'}
               iconColor="#e74c3c"
@@ -62,7 +62,7 @@ export default function UserStatisticsPage() {
               percentage={{ color: 'success', amount: '', label: 'Just updated' }}
             />
           </GridItem>
-          <GridItem $lg={2} $md={12} $xs={12}>
+          <GridItem $lg={3} $md={12} $xs={12}>
               {/* 이 카드는 다른 스타일을 적용해봅니다. */}
             <StatisticsCard
               icon={'📈'}
@@ -77,7 +77,7 @@ export default function UserStatisticsPage() {
       <SectionWrapper>
          <GridContainer $gap="0.5rem">
           {/* 차트 카드 섹션 */}
-          <GridItem $lg={2} $md={12} $xs={12}>
+          <GridItem $lg={3} $md={12} $xs={12}>
             {/* ChartCard는 내부적으로 Card를 사용하므로 props를 전달할 수 있습니다. */}
             {/* 예: <ChartCard title="..." description="..." bgColor="#ffffff" ...> */}
             <ChartCard title="Website Views" description="Last Campaign Performance">
@@ -92,7 +92,7 @@ export default function UserStatisticsPage() {
             </ChartCard>
           </GridItem>
 
-          <GridItem $lg={4} $md={12} $xs={12}>
+          <GridItem $lg={2} $md={12} $xs={12}>
             <ChartCard title="Daily Sales" description="(+15%) increase in today sales">
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={lineChartData} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
@@ -106,7 +106,7 @@ export default function UserStatisticsPage() {
             </ChartCard>
           </GridItem>
 
-          <GridItem $lg={3} $md={12} $xs={12}>
+          <GridItem $lg={4} $md={12} $xs={12}>
             <ChartCard title="Completed Tasks" description="Last Campaign Performance">
                 <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={lineChartData.map(d => ({...d, sales: d.sales * Math.random() + 50}))} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
