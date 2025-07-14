@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import axiosInstance from '@/lib/axios';
+import { useAuthStore } from '@/store/authStore';
 
 // 범용 레이아웃 및 새로 만든 컴포넌트 import
 import DashboardLayout from '../../components/layout/DashboardLayout';
@@ -60,49 +62,74 @@ const LoadingOrErrorContainer = styled.div`
 `;
 
 export default function ServerStatusPage() {
+  console.log('ServerStatusPage component rendered');
+  
+  const accessToken = useAuthStore((state) => state.accessToken);
   const [levelInput, setLevelInput] = useState<string>('1');
   const [apiParam, setApiParam] = useState<string>('1');
   const [data, setData] = useState<ServerStatus[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`http://172.16.83.8:3002/game/getServerStatus/${apiParam}`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const result = await response.json();
-        setData(Array.isArray(result.data) ? result.data : []);
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [apiParam]);
+  console.log('Current accessToken:', accessToken);
 
-  const handleSearch = () => setApiParam(levelInput);
+  const fetchData = async (param: string) => {
+    console.log('fetchData called with param:', param);
+    
+    if (!accessToken) {
+      console.log('No access token available');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      console.log(`Fetching server status with param: ${param}`);
+      const response = await axiosInstance.get(`/Game/getServerStatus/${param}`);
+      console.log('Server status response:', response.data);
+      setData(Array.isArray(response.data.data) ? response.data.data : []);
+    } catch (e: any) {
+      console.error('Server Status API Error:', e);
+      setError(e.response?.data?.message || e.message || '서버 상태를 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    console.log('useEffect triggered, accessToken:', accessToken);
+    // 페이지 로드 시 기본값으로 데이터 fetch
+    if (accessToken) {
+      fetchData(apiParam);
+    }
+  }, [accessToken]); // accessToken이 있을 때만 실행
+
+  const handleSearch = () => {
+    setApiParam(levelInput);
+    fetchData(levelInput);
+  };
 
   return (
     <DashboardLayout $bgColor="#1c2833">
-      <ControlsContainer>
-        <PageTitle>Server Status</PageTitle>
-        <div>
-          <SearchInput
-            type="number"
-            value={levelInput}
-            onChange={(e) => setLevelInput(e.target.value)}
-            placeholder="서버 ID 입력"
-          />
-          <SearchButton onClick={handleSearch}>조회</SearchButton>
-        </div>
-      </ControlsContainer>
-
       <GridContainer>
-        <GridItem $lg={8} $md={12} $xs={12}>
+        <GridItem $lg={6} $md={12} $xs={12}>
+          <ControlsContainer>
+            <PageTitle>Server Status</PageTitle>
+            <div>
+              <SearchInput
+                type="number"
+                value={levelInput}
+                onChange={(e) => setLevelInput(e.target.value)}
+                placeholder="서버 ID 입력"
+              />
+              <SearchButton onClick={handleSearch}>조회</SearchButton>
+            </div>
+          </ControlsContainer>
+        </GridItem>
+      </GridContainer>
+      
+      <GridContainer>
+        <GridItem $lg={6} $md={12} $xs={12}>
           {loading ? (
             <LoadingOrErrorContainer>데이터를 불러오는 중입니다...</LoadingOrErrorContainer>
           ) : error ? (
@@ -119,6 +146,20 @@ export default function ServerStatusPage() {
               ))}
             </ServerStatusCard>
           )}
+        </GridItem>
+        
+        <GridItem $lg={6} $md={12} $xs={12}>
+          <ServerStatusCard title="추가 정보">
+            {/* 여기에 새로운 테이블이나 컨텐츠를 추가할 수 있습니다 */}
+            <div style={{ padding: '1rem', color: '#95a5a6' }}>
+              <p>서버 통계나 다른 정보를 여기에 표시할 수 있습니다.</p>
+              <ul style={{ marginTop: '1rem' }}>
+                <li>총 서버 수: {data.length}</li>
+                <li>정상 서버: {data.filter(s => s.serverStatus === '1').length}</li>
+                <li>오류 서버: {data.filter(s => s.serverStatus === '0').length}</li>
+              </ul>
+            </div>
+          </ServerStatusCard>
         </GridItem>
       </GridContainer>
     </DashboardLayout>

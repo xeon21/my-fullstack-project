@@ -68,7 +68,7 @@ export default function ResourceStatusPage() {
                                 usage={latestData ? Math.round(latestData.memory) : 0}
                                 total={7.63}
                                 unit="GB"
-                                color="#3498db"
+                                color="#e74c3c"
                             />
                         </GridItem>
                         <GridItem $lg={6} $xs={12}>

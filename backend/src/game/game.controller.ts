@@ -1,7 +1,8 @@
 import { RequestDto_CombineRandomTree, RequestDto_CombineFomulaTree,RequestDto_PlantTree,RequestDto_FinalMap,RequestDto_PlantNursury,RequestDto_SwapGold } from "../dto/request.dto"; // DTO 임포트
 import { ResponseDto_CombineTree,ResponseDto_FinalMapInfo,ResponseDto_SwapGold ,ResponseDto_TreeInfomation} from "../dto/response.dto"; // 응답 DTO 임포트
-import { Controller,Param,Body,Get,Put,Post,Logger  } from "@nestjs/common";
+import { Controller,Param,Body,Get,Put,Post,Logger,UseGuards  } from "@nestjs/common";
 import { GameService } from "../game/game.service";
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import * as ClientDto from "../dto/client_dto";
 
 
@@ -14,7 +15,8 @@ import {
 } from '@nestjs/swagger'; //Swagger 데코레이터 추가
 
 @ApiTags('Game')
-@Controller('Game') 
+@Controller('Game')
+@UseGuards(JwtAuthGuard) 
 export class GameController{
     private readonly logger = new Logger("GameController");
     constructor(private GameService: GameService) {}

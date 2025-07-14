@@ -12,49 +12,107 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { GridContainer, GridItem } from '../components/layout/Grid';
 import Modal from '../components/common/Modal';
 
-// ... (Styled Components remain the same)
-const LoadingOrErrorContainer = styled.div`
-    padding: 4rem;
-    text-align: center;
-    color: #95a5a6;
-    width: 100%;
+// Styled Components - Tag Status 스타일과 동일하게 변경
+const TableContainer = styled.div`
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow-x: auto;
 `;
 
-const Table = styled.table`
+const HeaderContainer = styled.div`
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const Title = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+`;
+
+const StatusContainer = styled.div`
+  padding: 4rem;
+  text-align: center;
+  color: #6b7280;
+  background-color: white;
+  border-radius: 8px;
+`;
+
+const StyledTable = styled.table`
   width: 100%;
   border-collapse: collapse;
-  color: #ecf0f1;
-  th, td {
-    border: 1px solid #34495e;
-    padding: 0.75rem;
-    text-align: left;
+  white-space: nowrap;
+  
+  tbody tr:hover {
+    background-color: #f9fafb;
   }
-  th {
-    background-color: #34495e;
-  }
-  tr:nth-child(even) {
-    background-color: #2c3e50;
+`;
+
+const Th = styled.th`
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.90rem;
+  font-weight: 600;
+  color: #6b7280;
+  border-bottom: 2px solid #e5e7eb;
+  text-transform: uppercase;
+  vertical-align: top;
+`;
+
+const Td = styled.td`
+  padding: 0.4rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.875rem;
+  color: #374151;
+`;
+
+const PrimaryButton = styled.button`
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background: #2563eb;
   }
 `;
 
 const ActionButton = styled.button`
-  padding: 0.3rem 0.6rem;
+  padding: 0.375rem 0.75rem;
   border: none;
-  border-radius: 4px;
-  color: white;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
-  margin-right: 5px;
+  margin-right: 0.5rem;
+  transition: all 0.2s;
+  
   &.edit {
-    background-color: #2980b9;
-    &:hover { background-color: #3498db; }
+    background-color: #3b82f6;
+    color: white;
+    &:hover { background-color: #2563eb; }
   }
   &.delete {
-    background-color: #c0392b;
-    &:hover { background-color: #e74c3c; }
+    background-color: #ef4444;
+    color: white;
+    &:hover { background-color: #dc2626; }
   }
   &.password {
-    background-color: #8e44ad;
-    &:hover { background-color: #9b59b6; }
+    background-color: #8b5cf6;
+    color: white;
+    &:hover { background-color: #7c3aed; }
   }
 `;
 
@@ -204,49 +262,48 @@ export default function AdminPage() {
   };
 
   return (
-    <DashboardLayout $bgColor="#1c2833">
-      <GridContainer>
-        <GridItem >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ color: 'white' }}>사용자 관리</h2>
-            <ActionButton className="edit" onClick={handleOpenRegisterModal}>사용자 등록</ActionButton>
-          </div>
-          {loading ? (
-            <LoadingOrErrorContainer>사용자 목록을 불러오는 중...</LoadingOrErrorContainer>
-          ) : error ? (
-            <LoadingOrErrorContainer>오류: {error}</LoadingOrErrorContainer>
-          ) : (
-            <Table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>이름</th>
-                  <th>유저 ID</th>
-                  <th>역할</th>
-                  <th>가입일</th>
-                  <th>작업</th>
+    <DashboardLayout $bgColor="#e9eef2" $padding="2rem">
+      <HeaderContainer>
+        <Title>사용자 관리</Title>
+        <PrimaryButton onClick={handleOpenRegisterModal}>사용자 등록</PrimaryButton>
+      </HeaderContainer>
+      
+      {loading ? (
+        <StatusContainer>사용자 목록을 불러오는 중...</StatusContainer>
+      ) : error ? (
+        <StatusContainer>오류: {error}</StatusContainer>
+      ) : (
+        <TableContainer>
+          <StyledTable>
+            <thead>
+              <tr>
+                <Th>ID</Th>
+                <Th>이름</Th>
+                <Th>유저 ID</Th>
+                <Th>역할</Th>
+                <Th>가입일</Th>
+                <Th>작업</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(user => (
+                <tr key={user.userIdx}>
+                  <Td>{user.userIdx}</Td>
+                  <Td>{user.userName}</Td>
+                  <Td>{user.userId}</Td>
+                  <Td>{user.roles.join(', ')}</Td>
+                  <Td>{new Date(user.regTime).toLocaleDateString()}</Td>
+                  <Td>
+                    <ActionButton className="edit" onClick={() => handleOpenRoleModal(user)}>역할 변경</ActionButton>
+                    <ActionButton className="password" onClick={() => handleOpenPasswordModal(user)}>비번 변경</ActionButton>
+                    <ActionButton className="delete" onClick={() => handleOpenDeleteModal(user)}>삭제</ActionButton>
+                  </Td>
                 </tr>
-              </thead>
-              <tbody>
-                {users.map(user => (
-                  <tr key={user.userIdx}>
-                    <td>{user.userIdx}</td>
-                    <td>{user.userName}</td>
-                    <td>{user.userId}</td>
-                    <td>{user.roles.join(', ')}</td>
-                    <td>{new Date(user.regTime).toLocaleDateString()}</td>
-                    <td>
-                      <ActionButton className="edit" onClick={() => handleOpenRoleModal(user)}>역할 변경</ActionButton>
-                      <ActionButton className="password" onClick={() => handleOpenPasswordModal(user)}>비번 변경</ActionButton>
-                      <ActionButton className="delete" onClick={() => handleOpenDeleteModal(user)}>삭제</ActionButton>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
-        </GridItem>
-      </GridContainer>
+              ))}
+            </tbody>
+          </StyledTable>
+        </TableContainer>
+      )}
 
       <Modal
         isOpen={isRoleModalOpen}

@@ -18,7 +18,7 @@ export class AdminRepository {
   async createUser(dto: RegisterUserDto, hashedPassword: string): Promise<void> {
     await this.db.executeTransaction(async (connection) => {
       // 1. Insert user into user_info
-      const insertUserQuery = 'INSERT INTO user_info (UserID, UserName, UserPass) VALUES (?, ?, ?)';
+      const insertUserQuery = 'INSERT INTO user_info (UserID, UserName, UserPass, regTime) VALUES (?, ?, ?,NOW())';
       const userResult: any = await connection.query(insertUserQuery, [dto.userId, dto.userName, hashedPassword]);
       const newUserIdx = userResult[0].insertId;
 

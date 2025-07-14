@@ -2,7 +2,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link'; // [추가] Next.js Link 임포트
 
@@ -26,26 +26,25 @@ const StyledTable = styled.table`
 `;
 
 const Th = styled.th`
-  /* --- [수정] 클릭 가능하도록 cursor 변경 및 user-select 추가 --- */
-  cursor: pointer;
-  user-select: none; 
   padding: 0.75rem 1rem;
   text-align: left;
-  font-size: 0.75rem;
   font-weight: 600;
   color: #6b7280;
   border-bottom: 2px solid #e5e7eb;
   text-transform: uppercase;
   vertical-align: top;
-
-  &:hover {
-    background-color: #f9fafb;
-  }
   
   .header-content {
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.90rem; /* 50% 크게: 0.75rem * 1.5 = 1.125rem */
+    
+    &:hover {
+      background-color: #f9fafb;
+    }
   }
 
   & > div {
@@ -65,6 +64,10 @@ const Td = styled.td`
   border-bottom: 1px solid #f3f4f6;
   font-size: 0.875rem;
   color: #374151;
+`;
+
+const CenterTd = styled(Td)`
+  text-align: center;
 `;
 
 const FilterInput = styled.input`
@@ -100,7 +103,7 @@ const ActionButton = styled.button`
 const FilterActions = styled.div`
     display: flex;
     gap: 0.5rem;
-    margin-top: 0.5rem;
+    white-space: nowrap;
 `;
 
 const FilterButton = styled.button<{ $reset?: boolean }>`
@@ -139,6 +142,52 @@ interface TagStatusTableProps {
 }
 
 export default function TagStatusTable({ data, requestSort, sortConfig }: TagStatusTableProps) {
+  // 필터 상태 관리
+  const [filters, setFilters] = useState({
+    companyName: '',
+    companyCode: '',
+    storeName: '',
+    storeCode: ''
+  });
+
+  const [filteredData, setFilteredData] = useState(data);
+
+  // 필터 입력 변경 핸들러
+  const handleFilterChange = (field: keyof typeof filters, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // 검색 기능
+  const handleSearch = () => {
+    const filtered = data.filter(item => {
+      return (
+        (filters.companyName === '' || item.companyName === filters.companyName) &&
+        (filters.companyCode === '' || item.companyCode === filters.companyCode) &&
+        (filters.storeName === '' || item.storeName.toLowerCase().includes(filters.storeName.toLowerCase())) &&
+        (filters.storeCode === '' || item.storeCode.toLowerCase().includes(filters.storeCode.toLowerCase()))
+      );
+    });
+    setFilteredData(filtered);
+  };
+
+  // 리셋 기능
+  const handleReset = () => {
+    setFilters({
+      companyName: '',
+      companyCode: '',
+      storeName: '',
+      storeCode: ''
+    });
+    setFilteredData(data);
+  };
+
+  // data prop이 변경될 때 filteredData 업데이트
+  React.useEffect(() => {
+    setFilteredData(data);
+  }, [data]);
   
     // [추가] 정렬 아이콘 렌더링 함수
   const getSortIcon = (key: keyof TagStatusData) => {
@@ -158,54 +207,88 @@ export default function TagStatusTable({ data, requestSort, sortConfig }: TagSta
           {/* --- [핵심 수정] 필터 행을 제거하고 각 Th 안에 필터 요소를 포함 --- */}
           <tr>
             {/* --- [수정] 각 Th에 onClick 이벤트와 아이콘 추가 --- */}
-            <Th onClick={() => requestSort('companyName')}>
-                <div className="header-content">Company Name <SortIcon>{getSortIcon('companyName')}</SortIcon></div>
-                <div><FilterSelect><option>All</option></FilterSelect></div>
-            </Th>
-            <Th onClick={() => requestSort('companyCode')}>
-                <div className="header-content">Company Code <SortIcon>{getSortIcon('companyCode')}</SortIcon></div>
-                <div><FilterSelect><option>All</option></FilterSelect></div>
-            </Th>
-            <Th onClick={() => requestSort('storeName')}>
-                <div className="header-content">Store Name <SortIcon>{getSortIcon('storeName')}</SortIcon></div>
-                <div><FilterInput placeholder="Search..." /></div>
-            </Th>
-            <Th onClick={() => requestSort('storeCode')}>
-                <div className="header-content">Store Code <SortIcon>{getSortIcon('storeCode')}</SortIcon></div>
-                <div><FilterInput placeholder="Search..." /></div>
-            </Th>
-            <Th onClick={() => requestSort('total')}>
-                <div className="header-content">Total Tag Cnt <SortIcon>{getSortIcon('total')}</SortIcon></div>
-            </Th>
-            <Th onClick={() => requestSort('ok')}>
-                <div className="header-content">OK Tag Cnt <SortIcon>{getSortIcon('ok')}</SortIcon></div>
-            </Th>
-            <Th onClick={() => requestSort('wip')}>
-                <div className="header-content">WIP Tag Cnt <SortIcon>{getSortIcon('wip')}</SortIcon></div>
-            </Th>
-            <Th onClick={() => requestSort('ng')}>
-                <div className="header-content">NG Tag Cnt<SortIcon>{getSortIcon('ng')}</SortIcon></div>
+            <Th>
+                <div className="header-content" onClick={() => requestSort('companyName')}>Company Name <SortIcon>{getSortIcon('companyName')}</SortIcon></div>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <FilterSelect 
+                    value={filters.companyName} 
+                    onChange={(e) => handleFilterChange('companyName', e.target.value)}
+                  >
+                    <option value="">All</option>
+                    {[...new Set(data.map(item => item.companyName))].map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </FilterSelect>
+                </div>
             </Th>
             <Th>
-              Actions
-              <FilterActions>
-                <FilterButton>Search</FilterButton>
-                <FilterButton $reset>Reset</FilterButton>
-              </FilterActions>
+                <div className="header-content" onClick={() => requestSort('companyCode')}>Company Code <SortIcon>{getSortIcon('companyCode')}</SortIcon></div>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <FilterSelect 
+                    value={filters.companyCode} 
+                    onChange={(e) => handleFilterChange('companyCode', e.target.value)}
+                  >
+                    <option value="">All</option>
+                    {[...new Set(data.map(item => item.companyCode))].map(code => (
+                      <option key={code} value={code}>{code}</option>
+                    ))}
+                  </FilterSelect>
+                </div>
+            </Th>
+            <Th>
+                <div className="header-content" onClick={() => requestSort('storeName')}>Store Name <SortIcon>{getSortIcon('storeName')}</SortIcon></div>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <FilterInput 
+                    placeholder="Search..." 
+                    value={filters.storeName}
+                    onChange={(e) => handleFilterChange('storeName', e.target.value)}
+                  />
+                </div>
+            </Th>
+            <Th>
+                <div className="header-content" onClick={() => requestSort('storeCode')}>Store Code <SortIcon>{getSortIcon('storeCode')}</SortIcon></div>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <FilterInput 
+                    placeholder="Search..." 
+                    value={filters.storeCode}
+                    onChange={(e) => handleFilterChange('storeCode', e.target.value)}
+                  />
+                </div>
+            </Th>
+            <Th>
+                <div className="header-content" onClick={() => requestSort('total')}>Total Tag Cnt <SortIcon>{getSortIcon('total')}</SortIcon></div>
+            </Th>
+            <Th>
+                <div className="header-content" onClick={() => requestSort('ok')}>OK Tag Cnt <SortIcon>{getSortIcon('ok')}</SortIcon></div>
+            </Th>
+            <Th>
+                <div className="header-content" onClick={() => requestSort('wip')}>WIP Tag Cnt <SortIcon>{getSortIcon('wip')}</SortIcon></div>
+            </Th>
+            <Th>
+                <div className="header-content" onClick={() => requestSort('ng')}>NG Tag Cnt<SortIcon>{getSortIcon('ng')}</SortIcon></div>
+            </Th>
+            <Th style={{ minWidth: '150px' }}>
+              <div className="header-content">Actions</div>
+              <div>
+                <FilterActions>
+                  <FilterButton onClick={handleSearch}>Search</FilterButton>
+                  <FilterButton $reset onClick={handleReset}>Reset</FilterButton>
+                </FilterActions>
+              </div>
             </Th>
           </tr>
         </thead>
         <tbody>
-          {data.map((row, index) => (
+          {filteredData.map((row, index) => (
             <tr key={index}>
               <Td>{row.companyName}</Td>
               <Td>{row.companyCode}</Td>
               <Td>{row.storeName}</Td>
               <Td>{row.storeCode}</Td>
-              <Td>{row.total}</Td>
-              <Td>{row.ok}</Td>
-              <Td>{row.wip}</Td>
-              <Td>{row.ng}</Td>
+              <CenterTd>{row.total}</CenterTd>
+              <CenterTd>{row.ok}</CenterTd>
+              <CenterTd>{row.wip}</CenterTd>
+              <CenterTd>{row.ng}</CenterTd>
               <Td>
                 <Link href={`/tag-status/detail/${row.storeCode}?name=${encodeURIComponent(row.storeName)}`} passHref>
                   <ActionButton>🔍</ActionButton>
