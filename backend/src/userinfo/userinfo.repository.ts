@@ -6,6 +6,16 @@ import * as UserDto from "../dto/user.dto";
 export class UsersRepository {
   constructor(private readonly db: MysqlProvider) {}
 
+  async findUserByIdx(userIdx: number): Promise<{ UserIdx: number; UserPass: string } | null> {
+    const query = 'SELECT UserIdx, UserPass FROM user_info WHERE UserIdx = ?';
+    const [user] = await this.db.executeQuery<any[]>(query, [userIdx]);
+    return user || null;
+  }
+
+  async updatePassword(userIdx: number, hashedPassword: string): Promise<void> {
+    const query = 'UPDATE user_info SET UserPass = ? WHERE UserIdx = ?';
+    await this.db.executeQuery(query, [hashedPassword, userIdx]);
+  }
     //유저 정보 가져오기기
     async getUserInfo(uIndex: number): Promise<UserDto.GetUserInfo> {
         const query = 'CALL GetUserInfo(?)';

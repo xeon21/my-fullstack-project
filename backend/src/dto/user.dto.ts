@@ -1,3 +1,4 @@
+import { IsNotEmpty, IsIn } from 'class-validator';
 
 //유저정보 데이터
 export interface UserData {
@@ -48,16 +49,11 @@ export interface GetUserInfo {
     userdata: UserData;
 }
 
-
-
-
-
 //클라이언트로 보내는 내 나무 데이터 
 export interface GetMyTreeInfo {
     result: number;
     treeDataList: TreeData[];
 }
-
 
 //클라이언트로 보내는 양모장 정보
 export interface GetMyNusuryInfo {
@@ -65,20 +61,27 @@ export interface GetMyNusuryInfo {
     nusurydata: NusuryData[];
 }
 
-
 //클라이언트로 보내는 내 아이템 데이터 
 export interface GetMyItemInfo {
     result: number;
     itemdata: ItemData[];
 }
 
-
 //클라이언트로 보내는 로그인 데이터 
 export interface  LoginResult{
     result: number;
-   
 }
 
+export class UserDto {
+    userIdx: number;
+    userName: string;
+    userId: string;
+    regTime: Date;
+    roles: string[];
+}
 
-
-
+export class UpdateUserRoleDto {
+    @IsNotEmpty()
+    @IsIn(['admin', 'viewer'])
+    role: string;
+}

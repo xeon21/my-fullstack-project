@@ -2,46 +2,54 @@
 
 'use client';
 
-import React, { useState, useMemo, use } from 'react'; // [수정]
+import React, { useState, useMemo, use, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import TagDetailHeader from '../TagDetailHeader';
-import TagDetailTable, { TagDetailData } from '../TagDetailTable'; // [수정]
-
-// --- [추가] Mock 데이터 및 정렬 타입 정의 ---
-const mockDetailData: TagDetailData[] = Array.from({ length: 15 }, (_, i) => ({
-    id: `TG-00${i + 1}`,
-    prCode: `P00${i + 1}`,
-    tagType: i % 3 === 0 ? 'Type A' : 'Type B',
-    gwIp: `192.168.1.${100 + i}`,
-    operation: i % 4 === 0 ? 'Active' : 'Inactive',
-    status: i % 5 === 0 ? 'NG' : 'OK',
-    version: `1.0.${i}`,
-    rssi: -50 - i,
-    battery: 98 - i,
-    temperature: 23.5 + (i/10),
-    transmissionTime: new Date(Date.now() - i * 60000).toISOString(),
-    receivingTime: new Date(Date.now() - i * 60000).toISOString(),
-}));
+import TagDetailTable, { TagDetailData } from '../TagDetailTable';
+import axiosInstance from '@/lib/axios';
+import { useAuthStore } from '@/store/authStore';
 
 type SortDirection = 'ascending' | 'descending';
 interface SortConfig {
   key: keyof TagDetailData;
   direction: SortDirection;
 }
-// ---
 
 export default function TagDetailPage({ params }: { params: Promise<{ storeCode: string }> }) {
   const resolvedParams = use(params);
+  const accessToken = useAuthStore((state) => state.accessToken);
   
   const searchParams = useSearchParams();
   const storeName = searchParams.get('name') || '';
 
-  // --- [추가] 정렬 상태 및 로직 ---
+  const [data, setData] = useState<TagDetailData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
 
+  useEffect(() => {
+    const fetchTagDetails = async () => {
+      if (!accessToken) return;
+
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get(`/tag-status/detail/${resolvedParams.storeCode}`);
+        setData(response.data);
+        setError(null);
+      } catch (err) {
+        setError('태그 상세 정보를 불러오는데 실패했습니다.');
+        console.error('Failed to fetch tag details:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTagDetails();
+  }, [resolvedParams.storeCode, accessToken]);
+
   const sortedData = useMemo(() => {
-    let sortableItems = [...mockDetailData];
+    let sortableItems = [...data];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) {
@@ -54,7 +62,7 @@ export default function TagDetailPage({ params }: { params: Promise<{ storeCode:
       });
     }
     return sortableItems;
-  }, [sortConfig]);
+  }, [data, sortConfig]);
 
   const requestSort = (key: keyof TagDetailData) => {
     let direction: SortDirection = 'ascending';
@@ -63,12 +71,26 @@ export default function TagDetailPage({ params }: { params: Promise<{ storeCode:
     }
     setSortConfig({ key, direction });
   };
-  // ---
+
+  if (loading) {
+    return (
+      <DashboardLayout $bgColor="#e9eef2" $padding="2rem">
+        <div style={{ padding: '2rem', textAlign: 'center' }}>로딩 중...</div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout $bgColor="#e9eef2" $padding="2rem">
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>{error}</div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout $bgColor="#e9eef2" $padding="2rem">
       <TagDetailHeader storeName={storeName} storeCode={resolvedParams.storeCode} />
-      {/* [수정] Props 전달 */}
       <TagDetailTable 
         data={sortedData} 
         requestSort={requestSort}

@@ -70,12 +70,11 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     try {
       await login({ username, password });
-      router.push('/admin'); // 로그인 성공 시 대시보드로 이동
+      router.push('/dashboard/resource-status'); // 로그인 성공 시 대시보드로 이동
     } catch (err) {
-      setError('아이디 또는 비밀번호가 올바르지 않습니다.');
+      alert('아이디 또는 비밀번호가 올바르지 않습니다.');
     }
   };
 
@@ -96,7 +95,6 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
         <Button type="submit">로그인</Button>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
       </LoginForm>
     </LoginPageContainer>
   );

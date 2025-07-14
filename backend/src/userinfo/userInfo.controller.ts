@@ -1,18 +1,35 @@
 import { ResponseDto_UserData,ResponseDto_TreeDataAll, ResponseDto_GetMyItem,ResponseDto_GetMyNurseryData } from '../dto/response.dto'; // 게스트 로그인 응답 
-import { Controller,Param,Body,Get,Put,Post } from "@nestjs/common";
+import { Controller,Param,Body,Get,Put,Post, Patch, UseGuards, Request, HttpCode, HttpStatus } from "@nestjs/common";
 import { UserInfoService } from "./userInfo.service";
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 import {
   ApiTags,
   ApiOperation,
   ApiParam,
-  ApiResponse
+  ApiResponse,
+  ApiBearerAuth
 } from '@nestjs/swagger'; //Swagger 데코레이터 추가
 
 @ApiTags('UserInfo')
-@Controller('UserInfo') 
+@Controller('userinfo') 
 export class UserInfoController{
     
     constructor(private UserInfoService: UserInfoService) {}
+
+    @Patch('change-password')
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: '비밀번호 변경' })
+    @ApiBearerAuth()
+    @ApiResponse({ status: 200, description: '비밀번호가 성공적으로 변경되었습니다.' })
+    @ApiResponse({ status: 401, description: '인증되지 않았거나 비밀번호가 틀렸습니다.' })
+    async changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
+        // req.user는 JwtAuthGuard를 통해 주입된 JWT payload입니다.
+        const userIdx = req.user.sub; 
+        await this.UserInfoService.changePassword(userIdx, changePasswordDto);
+        return { message: '비밀번호가 성공적으로 변경되었습니다.' };
+    }
     
     //사용자 정보 조회 API
     @Get('getUserInfo/:userIndex')

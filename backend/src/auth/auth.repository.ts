@@ -37,4 +37,18 @@ export class AuthRepository { // 클래스 이름 변경
     }
     return rows.map(row => row.name);
   }
+
+  async getUserRoles(userId: number): Promise<string[]> {
+    const query = `
+      SELECT r.name
+      FROM user_roles ur
+      JOIN roles r ON ur.roleId = r.id
+      WHERE ur.userId = ?
+    `;
+    const rows = await this.db.executeQuery<any[]>(query, [userId]);
+    if (!rows || rows.length === 0) {
+      return [];
+    }
+    return rows.map(row => row.name);
+  }
 }

@@ -27,7 +27,7 @@ interface MenuItem {
 }
 
 export const menuItems: MenuItem[] = [
-    { title: 'Admin', icon: '👑', path: '/admin' , permission: 'menu_admin_view' },
+    
     {
         title: 'Dashboard',
         icon: '📊',
@@ -62,6 +62,7 @@ export const menuItems: MenuItem[] = [
             { title: '다이나믹 에디터', path: '/dynamic_page/new' },
         ]
     },
+    { title: 'Admin', icon: '👑', path: '/admin' , permission: 'menu_admin_view' },
 
     
 ];

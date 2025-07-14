@@ -3,14 +3,13 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import axios from 'axios';
 
-// [수정] User 인터페이스에 permissions 추가
 interface User {
   userId: number;
   username: string;
+  roles: string[];
   permissions: string[];
 }
 
-// [수정] AuthState 인터페이스에 hasPermission 함수 시그니처 추가
 interface AuthState {
   accessToken: string | null;
   user: User | null;
@@ -18,11 +17,11 @@ interface AuthState {
   login: (loginData: any) => Promise<void>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
+  hasRole: (role: string) => boolean;
 }
 
 export const useAuthStore = create(
   persist<AuthState>(
-    // [수정] set과 함께 get을 사용하도록 변경
     (set, get) => ({
       accessToken: null,
       user: null,
@@ -30,21 +29,27 @@ export const useAuthStore = create(
 
       login: async (loginData: any) => {
         try {
-          const response = await axios.post('http://172.16.83.8:3002/auth/login', loginData);
+          const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, loginData);
           const { accessToken } = response.data;
-          const payload = JSON.parse(atob(accessToken.split('.')[1]));
+
+          const base64Url = accessToken.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          const payload = JSON.parse(jsonPayload);
           
-          // [수정] JWT payload에서 permissions를 포함하여 user 객체 생성
           const user = {
             userId: payload.sub,
             username: payload.username,
-            permissions: payload.permissions || [], // 권한 정보가 없으면 빈 배열
+            roles: payload.roles || [],
+            permissions: payload.permissions || [],
           };
           
           set({ accessToken, user, isAuthenticated: true });
         } catch (error) {
-          console.error('Login failed:', error);
-          throw error;
+          // console.error('Login failed:', error); // 콘솔 에러 로깅 제거
+          throw new Error('Login Failed'); // 새로운 에러를 던져서 UI에 실패를 알림
         }
       },
 
@@ -53,16 +58,21 @@ export const useAuthStore = create(
         window.location.href = '/login';
       },
 
-      // [추가] hasPermission 함수 구현
       hasPermission: (permission: string) => {
-        const user = get().user; // get()을 사용해 최신 상태의 user 객체를 가져옵니다.
+        const user = get().user;
         if (!user || !user.permissions) {
-          return false; // 사용자가 없거나 권한 정보가 없으면 false를 반환합니다.
-          //return true;
+          return false;
         }
-        // 사용자가 해당 권한을 가지고 있는지 확인합니다.
         return user.permissions.includes(permission);
       },
+
+      hasRole: (role: string) => {
+        const user = get().user;
+        if (!user || !user.roles) {
+          return false;
+        }
+        return user.roles.includes(role);
+      }
     }),
     {
       name: 'auth-storage',

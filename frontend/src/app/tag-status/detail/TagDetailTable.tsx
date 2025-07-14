@@ -216,7 +216,7 @@ export default function TagDetailTable({ data, requestSort, sortConfig }: TagDet
                   <Td>{item.version}</Td>
                   <Td>{item.rssi}</Td>
                   <Td>{item.battery}%</Td>
-                  <Td>{item.temperature.toFixed(1)}°C</Td>
+                  <Td>{item.temperature ? Number(item.temperature).toFixed(1) : '-'}°C</Td>
                   <Td>{new Date(item.transmissionTime).toLocaleString()}</Td>
                   <Td>{new Date(item.receivingTime).toLocaleString()}</Td>
                   <Td></Td>
