@@ -30,7 +30,7 @@ export const useAuthStore = create(
 
       login: async (loginData: any) => {
         try {
-          const response = await axios.post('http://localhost:3002/auth/login', loginData);
+          const response = await axios.post('http://172.16.83.8:3002/auth/login', loginData);
           const { accessToken } = response.data;
           const payload = JSON.parse(atob(accessToken.split('.')[1]));
           

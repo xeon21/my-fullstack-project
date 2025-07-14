@@ -249,7 +249,7 @@ export const ProjectLoadModal = ({ onClose, onLoad }: ProjectLoadModalProps) => 
       params.append('page', String(currentPage));
       params.append('limit', String(limit));
       
-      const response = await axios.get(`http://localhost:3002/projects`, { params });
+      const response = await axios.get(`http://172.16.83.8:3002/projects`, { params });
       setProjects(response.data.data);
       setTotalPages(response.data.lastPage);
     } catch (error) {

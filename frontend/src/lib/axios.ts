@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3002', // 백엔드 API 기본 주소
+  baseURL: 'http://172.16.83.8:3002', // 백엔드 API 기본 주소
 });
 
 // 요청 인터셉터: API 요청을 보내기 전에 토큰을 헤더에 추가

@@ -72,7 +72,7 @@ export default function AdminPage() {
         setUserLoading(true);
         setUserError(null);
         try {
-            const response = await fetch(`http://localhost:3002/game/getALLTreeInfo/${userApiParam}`);
+            const response = await fetch(`http://172.16.83.8:3002/game/getALLTreeInfo/${userApiParam}`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const result = await response.json();
             setUserData(Array.isArray(result.data) ? result.data : []);
@@ -90,7 +90,7 @@ export default function AdminPage() {
         setServerLoading(true);
         setServerError(null);
         try {
-            const response = await fetch(`http://localhost:3002/game/getServerStatus/${serverApiParam}`);
+            const response = await fetch(`http://172.16.83.8:3002/game/getServerStatus/${serverApiParam}`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const result = await response.json();
             setServerData(Array.isArray(result.data) ? result.data : []);

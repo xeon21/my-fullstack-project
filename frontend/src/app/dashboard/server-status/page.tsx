@@ -71,7 +71,7 @@ export default function ServerStatusPage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://localhost:3002/game/getServerStatus/${apiParam}`);
+        const response = await fetch(`http://172.16.83.8:3002/game/getServerStatus/${apiParam}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
         setData(Array.isArray(result.data) ? result.data : []);

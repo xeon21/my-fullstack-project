@@ -62,8 +62,8 @@ const ErrorMessage = styled.p`
 `;
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('test');
-  const [password, setPassword] = useState('1234');
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState<string | null>(null);
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
