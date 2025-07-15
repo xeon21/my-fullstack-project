@@ -132,16 +132,11 @@ export interface TagDetailData {
     receivingTime: string;
 }
 
-type SortDirection = 'ascending' | 'descending';
-interface SortConfig {
-  key: keyof TagDetailData;
-  direction: SortDirection;
-}
 
 interface TagDetailTableProps {
   data: TagDetailData[];
   requestSort: (key: keyof TagDetailData) => void;
-  sortConfig: SortConfig | null;
+  sortConfig: { key: keyof TagDetailData; direction: 'ascending' | 'descending' } | null;
 }
 // ---
 

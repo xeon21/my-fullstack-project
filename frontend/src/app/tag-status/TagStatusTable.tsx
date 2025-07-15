@@ -128,17 +128,11 @@ export interface TagStatusData {
   wip: number;
   ng: number;
 }
-type SortDirection = 'ascending' | 'descending';
-
-interface SortConfig {
-  key: keyof TagStatusData;
-  direction: SortDirection;
-}
 
 interface TagStatusTableProps {
   data: TagStatusData[];
   requestSort: (key: keyof TagStatusData) => void;
-  sortConfig: SortConfig | null;
+  sortConfig: { key: keyof TagStatusData; direction: 'ascending' | 'descending' } | null;
 }
 
 export default function TagStatusTable({ data, requestSort, sortConfig }: TagStatusTableProps) {

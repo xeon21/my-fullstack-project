@@ -2,19 +2,14 @@
 
 'use client';
 
-import React, { useState, useMemo, use, useEffect } from 'react';
+import React, { useState, use, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import TagDetailHeader from '../TagDetailHeader';
 import TagDetailTable, { TagDetailData } from '../TagDetailTable';
 import axiosInstance from '@/lib/axios';
 import { useAuthStore } from '@/store/authStore';
-
-type SortDirection = 'ascending' | 'descending';
-interface SortConfig {
-  key: keyof TagDetailData;
-  direction: SortDirection;
-}
+import { useSort } from '@/hooks/useSort';
 
 export default function TagDetailPage({ params }: { params: Promise<{ storeCode: string }> }) {
   const resolvedParams = use(params);
@@ -26,7 +21,9 @@ export default function TagDetailPage({ params }: { params: Promise<{ storeCode:
   const [data, setData] = useState<TagDetailData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+  
+  // useSort 훅 사용
+  const { sortedData, requestSort, sortConfig } = useSort<TagDetailData>(data);
 
   useEffect(() => {
     const fetchTagDetails = async () => {
@@ -47,30 +44,6 @@ export default function TagDetailPage({ params }: { params: Promise<{ storeCode:
 
     fetchTagDetails();
   }, [resolvedParams.storeCode, accessToken]);
-
-  const sortedData = useMemo(() => {
-    let sortableItems = [...data];
-    if (sortConfig !== null) {
-      sortableItems.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
-        }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [data, sortConfig]);
-
-  const requestSort = (key: keyof TagDetailData) => {
-    let direction: SortDirection = 'ascending';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
-    }
-    setSortConfig({ key, direction });
-  };
 
   if (loading) {
     return (
